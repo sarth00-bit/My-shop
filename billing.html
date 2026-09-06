@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS Billing Counter - MyShop Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/Style.css">
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top shadow-sm">
+        <div class="container-fluid">
+            <button class="btn btn-outline-light me-2" id="sidebarToggle">
+                <i class="bi bi-list"></i>
+            </button>
+            <a class="navbar-brand fw-bold" href="Dashboard.html">
+                <i class="bi bi-shop me-2"></i>MyShop Manager
+            </a>
+            <div class="ms-auto d-flex align-items-center">
+                <span class="text-white small fw-semibold me-2"><i class="bi bi-person-circle me-1"></i> Billing Counter #1</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="d-flex" id="wrapper">
+        
+        <div class="d-flex flex-column p-3 bg-dark text-white sidebar shadow" id="sidebarMenu" style="width: 250px; min-height: 100vh;">
+            <ul class="nav nav-pills flex-column mb-auto">
+                <li class="nav-item mb-1">
+                    <a href="Dashboard.html" class="nav-link text-white"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
+                </li>
+                <li class="mb-1">
+                    <a href="billing.html" class="nav-link active text-white"><i class="bi bi-receipt me-2"></i> Billing</a>
+                </li>
+                <li class="mb-1">
+                    <a href="product.html" class="nav-link text-white"><i class="bi bi-box-seam me-2"></i> Products</a>
+                </li>
+                <li class="mb-1">
+                    <a href="invoices.html" class="nav-link text-white"><i class="bi bi-file-earmark-text me-2"></i> Invoices</a>
+                </li>
+                <li class="mb-1">
+                    <a href="report.html" class="nav-link text-white"><i class="bi bi-bar-chart-line me-2"></i> Report</a>
+                </li>
+                <li class="mb-1">
+                    <a href="settings.html" class="nav-link text-white"><i class="bi bi-gear me-2"></i> Settings</a>
+                </li>
+            </ul>
+            <hr class="text-secondary">
+            <div class="d-flex align-items-center justify-content-between px-2">
+                <div class="small">
+                    <i class="bi bi-person-badge text-info me-1"></i>
+                    <span>ID: <strong class="text-light">USR-001</strong></span>
+                </div>
+                <a href="login.html" class="btn btn-sm btn-outline-danger" title="Sign Out">
+                    <i class="bi bi-box-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+
+        <main class="flex-grow-1 p-4">
+            <div class="container-fluid">
+                
+                <div class="row g-4">
+                    <!-- LEFT COLUMN: Search, Cart, & Product Catalog -->
+                    <div class="col-lg-7 col-xl-8">
+                        
+                        <!-- 1. Category Pills & Real-Time Search Bar -->
+                        <div class="card border-0 shadow-sm p-3 mb-3">
+                            <div class="d-flex gap-2 overflow-auto pb-2 mb-2" id="categoryPills">
+                                <button class="btn btn-primary rounded-pill px-3 active category-pill" data-category="All">All</button>
+                                <button class="btn btn-outline-secondary rounded-pill px-3 category-pill" data-category="Electronics">Electronics</button>
+                                <button class="btn btn-outline-secondary rounded-pill px-3 category-pill" data-category="Apparel">Apparel</button>
+                                <button class="btn btn-outline-secondary rounded-pill px-3 category-pill" data-category="Accessories">Accessories</button>
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                                <input type="text" id="billingProductSearch" class="form-control form-control-lg border-start-0 ps-0" placeholder="Search by Name, SKU, or ID...">
+                            </div>
+                        </div>
+
+                        <!-- 2. Current Cart Items Section (Below Search) -->
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                                <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-cart3 me-2"></i>Current Cart Items</h6>
+                                <button class="btn btn-sm btn-outline-danger" id="btnClearCart"><i class="bi bi-trash me-1"></i>Clear Cart</button>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Item</th>
+                                                <th>Price</th>
+                                                <th>Qty</th>
+                                                <th>Total</th>
+                                                <th class="text-end">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="cartTableBody">
+                                            <!-- Cart items rendered dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. Product Cards Grid (Below Cart) -->
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-bold mb-0 text-secondary"><i class="bi bi-grid-3x3-gap me-2"></i>Select Products</h6>
+                        </div>
+                        <div class="row g-3 overflow-auto style-scrollbar" id="productGrid" style="max-height: 420px;">
+                            <!-- Product cards rendered dynamically -->
+                        </div>
+
+                    </div>
+
+                    <!-- RIGHT COLUMN: Customer Info & Floating Payment Summary -->
+                    <div class="col-lg-5 col-xl-4">
+                        <div class="sticky-payment-panel">
+                            
+                            <!-- Customer Information Card -->
+                            <div class="card border-0 shadow-sm mb-3">
+                                <div class="card-header bg-white py-3">
+                                    <h6 class="mb-0 fw-bold"><i class="bi bi-person me-2"></i>Customer Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-2">
+                                        <div class="col-12">
+                                            <input type="text" id="custName" class="form-control" placeholder="Customer Name">
+                                        </div>
+                                        <div class="col-12">
+                                            <input type="text" id="custPhone" class="form-control" placeholder="Phone Number">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Payment Summary Card -->
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-primary text-white py-3">
+                                    <h6 class="mb-0 fw-bold"><i class="bi bi-receipt-cutoff me-2"></i>Payment Summary</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Subtotal</span>
+                                        <span class="fw-semibold" id="summarySubtotal">₹0.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Total GST</span>
+                                        <span class="fw-semibold" id="summaryGST">₹0.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <span class="text-muted">Discount (₹)</span>
+                                        <input type="number" id="discountInput" class="form-control form-control-sm text-end" style="width: 100px;" value="0" min="0">
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="fw-bold mb-0">Grand Total</h5>
+                                        <h4 class="fw-bold text-success mb-0" id="summaryGrandTotal">₹0.00</h4>
+                                    </div>
+
+                                    <!-- Payment Method Options -->
+                                    <label class="form-label small text-muted fw-bold mb-2">Payment Method</label>
+                                    <div class="btn-group w-100 mb-3" role="group">
+                                        <input type="radio" class="btn-check" name="paymentMethod" id="payCash" value="Cash" checked>
+                                        <label class="btn btn-outline-primary" for="payCash"><i class="bi bi-cash-stack d-block fs-5"></i>Cash</label>
+
+                                        <input type="radio" class="btn-check" name="paymentMethod" id="payUPI" value="UPI">
+                                        <label class="btn btn-outline-primary" for="payUPI"><i class="bi bi-qr-code d-block fs-5"></i>UPI</label>
+
+                                        <input type="radio" class="btn-check" name="paymentMethod" id="payCard" value="Card">
+                                        <label class="btn btn-outline-primary" for="payCard"><i class="bi bi-credit-card d-block fs-5"></i>Card</label>
+                                    </div>
+
+                                    <button class="btn btn-success btn-lg w-100 fw-bold" id="btnCompletePayment">
+                                        <i class="bi bi-printer me-2"></i>Pay & Print Invoice
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../Html/js/app.js"></script>
+    <script src="../Html/js/billing.js"></script>
+</body>
+</html>

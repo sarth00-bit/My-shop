@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyShop Manager - Settings</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Global Style Sheet -->
+    <link rel="stylesheet" href="../css/Style.css">
+</head>
+<body>
+
+    <!-- TOP BLUE NAVBAR -->
+    <header class="top-navbar d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+            <button class="btn-toggle" id="btnToggleSidebar" title="Toggle Navigation">
+                <i class="bi bi-list"></i>
+            </button>
+            <a href="Dashboard.html" class="navbar-brand d-flex align-items-center gap-2">
+                <i class="bi bi-shop"></i>
+                <span>MyShop Manager</span>
+            </a>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <input type="text" class="form-control search-input" placeholder="Search...">
+            <div class="dropdown">
+                <button class="btn btn-sm text-white dropdown-toggle d-flex align-items-center gap-1" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-person-circle fs-5"></i>
+                    <span class="d-none d-md-inline">Admin</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-menu-item dropdown-item" href="Settings.html">Settings</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-menu-item dropdown-item text-danger" href="login.html">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <div class="d-flex" id="wrapper">
+
+        <div class="d-flex flex-column p-3 bg-dark text-white sidebar shadow" id="sidebarMenu" style="width: 250px; min-height: 100vh;">
+            <!-- Sidebar Navigation (Identical structure and colors to standard menu) -->
+            <ul class="nav nav-pills flex-column mb-auto">
+                <li class="nav-item mb-1">
+                    <a href="Dashboard.html" class="nav-link text-white"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
+                </li>  
+                <li class="mb-1">
+                    <a href="billing.html" class="nav-link text-white"><i class="bi bi-receipt me-2"></i> Billing</a>
+                </li>
+                <li class="mb-1">
+                    <a href="product.html" class="nav-link active text-white"><i class="bi bi-box-seam me-2"></i> Products</a>
+                </li>
+                <li class="mb-1">
+                    <a href="invoices.html" class="nav-link text-white"><i class="bi bi-file-earmark-text me-2"></i> Invoices</a>
+                </li>
+                <li class="mb-1">
+                    <a href="report.html" class="nav-link text-white"><i class="bi bi-bar-chart-line me-2"></i> Report</a>
+                </li>
+                <li class="mb-1">
+                    <a href="settings.html" class="nav-link text-white"><i class="bi bi-gear me-2"></i> Settings</a>
+                </li>
+            </ul>
+
+            <hr class="text-secondary">
+            <div class="d-flex align-items-center justify-content-between px-2">
+                <div class="small">
+                    <i class="bi bi-person-badge text-info me-1"></i>
+                    <span>ID: <strong class="text-light">USR-001</strong></span>
+                </div>
+                <a href="login.html" class="btn btn-sm btn-outline-danger" title="Sign Out">
+                    <i class="bi bi-box-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+        
+        <!-- MAIN CONTENT AREA -->
+        <main class="main-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="fw-bold m-0"><i class="bi bi-gear-fill me-2 text-primary"></i>Settings</h4>
+            </div>
+
+            <!-- SETTINGS FORM -->
+            <form id="settingsForm">
+                <div class="row g-4">
+                    
+                    <!-- SHOP INFORMATION -->
+                    <div class="col-lg-6">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-header bg-white fw-bold py-3">
+                                <i class="bi bi-shop-window text-primary me-2"></i>Shop Information
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Shop Name</label>
+                                    <input type="text" class="form-control" id="shopName" placeholder="e.g. MyShop Store" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Address</label>
+                                    <textarea class="form-control" id="shopAddress" rows="2" placeholder="Street, City, Pincode"></textarea>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-semibold">Phone Number</label>
+                                        <input type="tel" class="form-control" id="shopPhone" placeholder="+91 9876543210">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-semibold">Email Address</label>
+                                        <input type="email" class="form-control" id="shopEmail" placeholder="contact@myshop.com">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">GST / Tax Number</label>
+                                    <input type="text" class="form-control" id="shopGst" placeholder="27AAAAA0000A1Z5">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="shopLogoInput" class="form-label">Shop Logo</label>
+                                    <input 
+                                        class="form-control" 
+                                        type="file" 
+                                        id="shopLogoInput" 
+                                        accept="image/*"
+                                        onchange="previewShopLogo(event)"
+                                    >
+                                    
+                                    <!-- Clean Preview Container -->
+                                    <div class="logo-preview-box mt-2">
+                                        <img id="logoPreview" src="" alt="Preview" style="display: none;">
+                                        <span id="logoPlaceholderText" class="text-muted small">No Logo</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BILLING SETTINGS -->
+                    <div class="col-lg-6">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-header bg-white fw-bold py-3">
+                                <i class="bi bi-receipt-cutoff text-primary me-2"></i>Billing Settings
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-semibold">Invoice Prefix</label>
+                                        <input type="text" class="form-control" id="invoicePrefix" placeholder="e.g. INV-">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-semibold">Currency Symbol</label>
+                                        <select class="form-select" id="currencySymbol">
+                                            <option value="₹">₹ (INR)</option>
+                                            <option value="$">$ (USD)</option>
+                                            <option value="€">€ (EUR)</option>
+                                            <option value="£">£ (GBP)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Default Tax Rate (%)</label>
+                                    <input type="number" step="0.01" class="form-control" id="defaultTax" placeholder="e.g. 18">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Invoice Footer Note</label>
+                                    <textarea class="form-control" id="invoiceFooter" rows="3" placeholder="Thank you for shopping with us!"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- USER PROFILE & SECURITY -->
+                    <div class="col-lg-6">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-header bg-white fw-bold py-3">
+                                <i class="bi bi-person-gear text-primary me-2"></i>User Profile & Security
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Admin Name</label>
+                                    <input type="text" class="form-control" id="userName" placeholder="Admin Name">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Role</label>
+                                    <input type="text" class="form-control" value="Store Administrator" disabled>
+                                </div>
+                                <hr class="my-3">
+                                <h6 class="fw-bold mb-3 text-secondary">Change Password</h6>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Current Password</label>
+                                    <input type="password" class="form-control" id="currentPassword" placeholder="••••••••">
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-semibold">New Password</label>
+                                        <input type="password" class="form-control" id="newPassword" placeholder="••••••••">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-semibold">Confirm Password</label>
+                                        <input type="password" class="form-control" id="confirmPassword" placeholder="••••••••">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- APPEARANCE SETTINGS -->
+                    <div class="col-lg-6">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-header bg-white fw-bold py-3">
+                                <i class="bi bi-palette text-primary me-2"></i>Appearance
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                    <div>
+                                        <span class="fw-semibold d-block">Collapse Sidebar by Default</span>
+                                        <small class="text-muted">Keep sidebar compact to save screen space</small>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input 
+                                            class="form-check-input" 
+                                            type="checkbox" 
+                                            id="darkModeToggle" 
+                                            onchange="toggleDarkMode(this.checked)"
+                                        >
+                                        <label class="form-check-label" for="darkModeToggle">Dark Mode</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ACTION BAR -->
+                <div class="mt-4 p-3 bg-white shadow-sm rounded d-flex justify-content-between align-items-center border">
+                    <span class="text-muted small"><i class="bi bi-info-circle me-1"></i>Saved settings apply globally across all pages.</span>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold">
+                        <i class="bi bi-floppy me-2"></i>Save Settings
+                    </button>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../Html/js/app.js"></script>
+    <script src="../Html/js/settings.js"></script>
+</body>
+</html>

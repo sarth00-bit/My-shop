@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | MyShop Manager</title>
+    <link rel="stylesheet" href="../css/login.css">
+</head>
+
+<body>
+
+    <main class="login-container">
+
+        <section class="login-card">
+
+            <!-- Logo / Header -->
+            <div class="login-header">
+                <div class="logo">MS</div>
+                <h1>Welcome Back</h1>
+                <p>Sign in to access your management system</p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" novalidate>
+
+                <!-- Username / Email -->
+                <div class="form-group">
+                    <label for="username">Username / Email</label>
+
+                    <div class="input-wrapper">
+                        <span class="input-icon">👤</span>
+                        <input
+                            type="text"
+                            id="username"
+                            name="username"
+                            placeholder="Enter username or email"
+                            autocomplete="username"
+                        >
+                    </div>
+
+                    <small class="error-message" id="usernameError"></small>
+                </div>
+
+                <!-- Password -->
+                <div class="form-group">
+                    <label for="password">Password</label>
+
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔒</span>
+
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder="Enter your password"
+                            autocomplete="current-password"
+                        >
+
+                        <button
+                            type="button"
+                            class="password-toggle"
+                            id="togglePassword"
+                            aria-label="Show password"
+                        >
+                            Show
+                        </button>
+                    </div>
+
+                    <small class="error-message" id="passwordError"></small>
+                </div>
+
+                <!-- Remember Me -->
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox" id="rememberMe">
+                        <span>Remember Me</span>
+                    </label>
+
+                    <a href="#" class="forgot-password">
+                        Forgot Password?
+                    </a>
+                </div>
+
+                <!-- General Error -->
+                <div id="loginError" class="login-error"></div>
+
+                <!-- Login Button -->
+                <button type="submit" id="loginButton" class="login-button">
+                    <span id="buttonText">Login</span>
+                    <span id="loader" class="loader"></span>
+                </button>
+
+            </form>
+
+            <!-- Demo Credentials -->
+            <div class="demo-section">
+                <div class="demo-title">
+                    <span>🧪</span>
+                    Demo Credentials
+                </div>
+
+                <div class="credential">
+                    <strong>Admin</strong>
+                    <span>Username: <b>admin</b></span>
+                    <span>Password: <b>admin123</b></span>
+                </div>
+
+                <div class="credential">
+                    <strong>Staff</strong>
+                    <span>Username: <b>staff</b></span>
+                    <span>Password: <b>staff123</b></span>
+                </div>
+            </div>
+
+            <p class="development-note">
+                Development mode — connect this form to your Node.js authentication API later.
+            </p>
+
+        </section>
+
+    </main>
+
+    <script src="../Html/js/login.js"></script>
+</body>
+</html>

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Create Account | Management System</title>
+
+    <link rel="stylesheet" href="../css/signup.css">
+</head>
+
+<body>
+
+    <main class="signup-container">
+
+        <section class="signup-card">
+
+            <!-- Header -->
+            <div class="signup-header">
+
+                <a href="Dashboard.html" class="logo">
+                    MS
+                </a>
+
+                <h1>Create Account</h1>
+
+                <p>
+                    Create your account to access the management system.
+                </p>
+
+            </div>
+
+
+            <!-- Signup Form -->
+            <form id="signupForm" novalidate>
+
+                <!-- Full Name -->
+                <div class="form-group">
+
+                    <label for="fullName">
+                        Full Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="fullName"
+                        name="fullName"
+                        placeholder="Enter your full name"
+                        autocomplete="name"
+                    >
+
+                    <small
+                        class="error-message"
+                        id="fullNameError">
+                    </small>
+
+                </div>
+
+
+                <!-- Email -->
+                <div class="form-group">
+
+                    <label for="email">
+                        Email Address
+                    </label>
+
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="Enter your email address"
+                        autocomplete="email"
+                    >
+
+                    <small
+                        class="error-message"
+                        id="emailError">
+                    </small>
+
+                </div>
+
+
+                <!-- Mobile Number -->
+                <div class="form-group">
+
+                    <label for="mobile">
+                        Mobile Number
+                    </label>
+
+                    <input
+                        type="tel"
+                        id="mobile"
+                        name="mobile"
+                        placeholder="Enter 10-digit mobile number"
+                        maxlength="10"
+                        inputmode="numeric"
+                        autocomplete="tel"
+                    >
+
+                    <small
+                        class="error-message"
+                        id="mobileError">
+                    </small>
+
+                </div>
+
+
+                <!-- Password -->
+                <div class="form-group">
+
+                    <label for="password">
+                        Password
+                    </label>
+
+                    <div class="password-wrapper">
+
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder="Create a password"
+                            autocomplete="new-password"
+                        >
+
+                        <button
+                            type="button"
+                            id="togglePassword"
+                            class="show-password">
+                            Show
+                        </button>
+
+                    </div>
+
+                    <small
+                        class="password-hint">
+                        Minimum 6 characters.
+                    </small>
+
+                    <small
+                        class="error-message"
+                        id="passwordError">
+                    </small>
+
+                </div>
+
+
+                <!-- Confirm Password -->
+                <div class="form-group">
+
+                    <label for="confirmPassword">
+                        Confirm Password
+                    </label>
+
+                    <div class="password-wrapper">
+
+                        <input
+                            type="password"
+                            id="confirmPassword"
+                            name="confirmPassword"
+                            placeholder="Re-enter your password"
+                            autocomplete="new-password"
+                        >
+
+                        <button
+                            type="button"
+                            id="toggleConfirmPassword"
+                            class="show-password">
+                            Show
+                        </button>
+
+                    </div>
+
+                    <small
+                        class="error-message"
+                        id="confirmPasswordError">
+                    </small>
+
+                </div>
+
+
+                <!-- Terms -->
+                <div class="terms">
+
+                    <label>
+
+                        <input
+                            type="checkbox"
+                            id="terms">
+
+                        <span>
+                            I agree to the Terms and Conditions.
+                        </span>
+
+                    </label>
+
+                    <small
+                        class="error-message"
+                        id="termsError">
+                    </small>
+
+                </div>
+
+
+                <!-- General Error -->
+                <div
+                    id="signupError"
+                    class="signup-error">
+                </div>
+
+
+                <!-- Submit -->
+                <button
+                    type="submit"
+                    id="signupButton"
+                    class="signup-button">
+
+                    <span id="buttonText">
+                        Create Account
+                    </span>
+
+                    <span
+                        id="loader"
+                        class="loader">
+                    </span>
+
+                </button>
+
+            </form>
+
+
+            <!-- Login Link -->
+            <div class="login-link">
+
+                Already have an account?
+
+                <a href="login.html">
+                    Login
+                </a>
+
+            </div>
+
+
+            <!-- Back Home -->
+            <a href="index.html" class="back-home">
+                ← Back to Home
+            </a>
+
+        </section>
+
+    </main>
+
+
+    <script src="../js/signup.js"></script>
+
+</body>
+</html>

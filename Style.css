@@ -1,0 +1,819 @@
+/* ==========================================================================
+   1. CSS THEME VARIABLES (LIGHT & DARK MODE)
+   ========================================================================== */
+:root {
+    /* Primary Colors */
+    --bs-primary-rgb: 13, 110, 253;
+    --navbar-bg: #0d6efd;
+    --navbar-color: #ffffff;
+    
+    /* Light Theme Defaults */
+    --bg-main: #f8f9fa;
+    --bg-card: #ffffff;
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --border-color: #dee2e6;
+    --table-header-bg: #f8f9fa;
+    --table-hover-bg: rgba(0, 0, 0, 0.04);
+    
+    /* Sidebar Specific (Consolidated Dark Theme) */
+    --sidebar-bg: #212529;
+    --sidebar-color: #ffffff;
+    --sidebar-link-color: rgba(255, 255, 255, 0.75);
+    --sidebar-link-hover-bg: rgba(255, 255, 255, 0.1);
+    --sidebar-link-active-bg: rgba(255, 255, 255, 0.2);
+    --sidebar-width: 250px;
+    --sidebar-collapsed-width: 70px;
+}
+
+/* Dark Mode Variable Overrides */
+body.dark-mode,
+[data-bs-theme="dark"] {
+    --bg-main: #121212;
+    --bg-card: #1e1e1e;
+    --text-primary: #e9ecef;
+    --text-secondary: #adb5bd;
+    --border-color: #333333;
+    --navbar-bg: #0b5ed7;
+    --sidebar-bg: #181b1e;
+    --table-header-bg: #2b3035;
+    --table-hover-bg: rgba(255, 255, 255, 0.05);
+}
+
+/* ==========================================================================
+   2. GLOBAL LAYOUT RESET & CORE STYLES
+   ========================================================================== */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-main) !important;
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    margin: 0;
+    padding: 0;
+}
+
+#wrapper {
+    display: flex;
+    width: 100%;
+    min-height: calc(100vh - 56px);
+}
+
+.main-content,
+main.flex-grow-1,
+.report-main-content {
+    background-color: var(--bg-main);
+    min-height: calc(100vh - 56px);
+    flex-grow: 1;
+    transition: background-color 0.3s ease;
+}
+
+/* ==========================================================================
+   3. UNIFIED TOP NAVBAR (Supports standard <nav> & custom <header>)
+   ========================================================================== */
+.top-navbar,
+nav.navbar.fixed-top,
+header.top-navbar {
+    background-color: var(--navbar-bg) !important;
+    height: 56px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1040;
+    padding: 0 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease;
+}
+
+.top-navbar .navbar-brand,
+nav.navbar .navbar-brand {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: var(--navbar-color) !important;
+    text-decoration: none;
+}
+
+/* Top Bar Toggle Button */
+#sidebarToggle,
+#btnToggleSidebar,
+.btn-toggle {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#sidebarToggle:hover,
+#btnToggleSidebar:hover,
+.btn-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.top-navbar .search-input,
+nav.navbar input[type="search"] {
+    max-width: 250px;
+    background-color: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+}
+
+.top-navbar .search-input::placeholder,
+nav.navbar input[type="search"]::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.top-navbar .search-input:focus,
+nav.navbar input[type="search"]:focus {
+    background-color: #ffffff;
+    color: #212529;
+}
+
+/* ==========================================================================
+   4. UNIFIED COLLAPSIBLE SIDEBAR
+   ========================================================================== */
+.sidebar,
+#sidebar,
+#sidebarMenu {
+    width: var(--sidebar-width);
+    min-width: var(--sidebar-width);
+    background-color: var(--sidebar-bg) !important;
+    color: var(--sidebar-color);
+    min-height: calc(100vh - 56px);
+    transition: all 0.3s ease-in-out;
+    z-index: 1030;
+}
+
+/* Standard Nav Links Inside Sidebar */
+.sidebar .nav-link,
+#sidebar .nav-link,
+#sidebarMenu .nav-link {
+    color: var(--sidebar-link-color) !important;
+    padding: 0.7rem 1rem;
+    font-weight: 500;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+
+.sidebar .nav-link i,
+#sidebar .nav-link i,
+#sidebarMenu .nav-link i {
+    font-size: 1.1rem;
+    width: 24px;
+    margin-right: 8px;
+    text-align: center;
+}
+
+.sidebar .nav-link:hover,
+#sidebar .nav-link:hover,
+#sidebarMenu .nav-link:hover {
+    color: #ffffff !important;
+    background-color: var(--sidebar-link-hover-bg) !important;
+}
+
+.sidebar .nav-link.active,
+#sidebar .nav-link.active,
+#sidebarMenu .nav-link.active {
+    color: #ffffff !important;
+    background-color: var(--sidebar-link-active-bg) !important;
+    font-weight: 600;
+}
+
+/* Collapsed Sidebar State (Toggled via JS) */
+body.sidebar-collapsed .sidebar,
+body.sidebar-collapsed #sidebar,
+body.sidebar-collapsed #sidebarMenu,
+.sidebar.collapsed,
+#sidebar.collapsed,
+#sidebarMenu.collapsed {
+    width: var(--sidebar-collapsed-width) !important;
+    min-width: var(--sidebar-collapsed-width) !important;
+}
+
+body.sidebar-collapsed .sidebar-text,
+body.sidebar-collapsed .sidebar-footer-text,
+.sidebar.collapsed .sidebar-text,
+#sidebar.collapsed .sidebar-text,
+#sidebarMenu.collapsed .sidebar-text {
+    display: none !important;
+}
+
+body.sidebar-collapsed .sidebar .nav-link,
+.sidebar.collapsed .nav-link,
+#sidebar.collapsed .nav-link,
+#sidebarMenu.collapsed .nav-link {
+    justify-content: center;
+    padding: 0.7rem 0;
+}
+
+body.sidebar-collapsed .sidebar .nav-link i,
+.sidebar.collapsed .nav-link i,
+#sidebar.collapsed .nav-link i,
+#sidebarMenu.collapsed .nav-link i {
+    margin-right: 0;
+}
+
+/* Sidebar Footer Profile Area */
+.sidebar-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 1rem;
+    margin-top: auto;
+}
+
+/* ==========================================================================
+   5. UI COMPONENTS & DARK MODE OVERRIDES
+   ========================================================================== */
+
+/* Cards Core */
+.card {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.card-header {
+    background-color: var(--bg-card) !important;
+    border-bottom-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+.card-footer {
+    background-color: var(--bg-card) !important;
+    border-top-color: var(--border-color) !important;
+}
+
+/* Tables Styling & Dark Mode Compatibility */
+.table {
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+.table th,
+.table-light th,
+.table thead th {
+    background-color: var(--table-header-bg) !important;
+    color: var(--text-secondary) !important;
+    border-color: var(--border-color) !important;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.table td {
+    vertical-align: middle;
+    border-color: var(--border-color) !important;
+    background-color: transparent !important;
+    color: var(--text-primary) !important;
+}
+
+.table-hover tbody tr:hover {
+    background-color: var(--table-hover-bg) !important;
+}
+
+/* KPI Cards Override */
+.kpi-card {
+    border: none !important;
+    border-radius: 8px;
+    transition: transform 0.2s ease-in-out;
+}
+
+.kpi-card:hover {
+    transform: translateY(-2px);
+}
+
+/* Custom Product Round Add Button */
+.product-card .btn-add,
+.product-card .add-btn,
+.product-card .btn-outline-secondary,
+.product-card .btn-outline-primary {
+    background-color: #198754 !important;
+    color: #ffffff !important;
+    border-color: #198754 !important;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.product-card .btn-add:hover,
+.product-card .add-btn:hover,
+.product-card .btn-outline-secondary:hover,
+.product-card .btn-outline-primary:hover {
+    background-color: #157347 !important;
+    border-color: #157347 !important;
+}
+
+/* Report Navigation Tabs */
+.report-tabs .nav-link {
+    color: var(--text-secondary);
+    border: 1px solid transparent;
+    border-radius: 6px 6px 0 0;
+    padding: 0.75rem 1rem;
+}
+
+.report-tabs .nav-link.active {
+    color: #fd0db5 !important;
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) var(--border-color) var(--bg-card) !important;
+    border-bottom: 3px solid #f90dfd !important;
+}
+
+/* Forms & Inputs Dark Mode Integration */
+body.dark-mode .form-control,
+body.dark-mode .form-select,
+[data-bs-theme="dark"] .form-control,
+[data-bs-theme="dark"] .form-select {
+    background-color: #2b3035 !important;
+    border-color: var(--border-color) !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode .form-control::placeholder,
+[data-bs-theme="dark"] .form-control::placeholder {
+    color: #adb5bd !important;
+}
+
+body.dark-mode .input-group-text,
+[data-bs-theme="dark"] .input-group-text {
+    background-color: #212529 !important;
+    border-color: var(--border-color) !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode .dropdown-menu,
+[data-bs-theme="dark"] .dropdown-menu {
+    background-color: #212529 !important;
+    border-color: var(--border-color) !important;
+}
+
+body.dark-mode .dropdown-item,
+[data-bs-theme="dark"] .dropdown-item {
+    color: #e9ecef !important;
+}
+
+body.dark-mode .dropdown-item:hover,
+[data-bs-theme="dark"] .dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark-mode .modal-content,
+[data-bs-theme="dark"] .modal-content {
+    background-color: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Text Overrides for Dark Mode */
+body.dark-mode .text-dark,
+[data-bs-theme="dark"] .text-dark {
+    color: #f8f9fa !important;
+}
+
+body.dark-mode .text-secondary,
+[data-bs-theme="dark"] .text-secondary,
+body.dark-mode .text-muted,
+[data-bs-theme="dark"] .text-muted {
+    color: #adb5bd !important;
+}
+
+body.dark-mode .bg-light,
+[data-bs-theme="dark"] .bg-light {
+    background-color: #2b3035 !important;
+    color: #ffffff !important;
+}
+
+/* ==========================================================================
+   6. UTILITIES & SCROLLBARS
+   ========================================================================== */
+.style-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.style-scrollbar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.style-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+body.dark-mode .style-scrollbar::-webkit-scrollbar-thumb,
+[data-bs-theme="dark"] .style-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* ==========================================================================
+   7. PRINT MEDIA RULES
+   ========================================================================== */
+@media print {
+    .no-print, 
+    .top-navbar, 
+    nav.navbar,
+    .sidebar,
+    #sidebar,
+    #sidebarMenu {
+        display: none !important;
+    }
+    
+    body {
+        padding-top: 0 !important;
+        background-color: #ffffff !important;
+        color: #000000 !important;
+    }
+    
+    .main-content,
+    #wrapper main {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+}
+
+/* ==========================================================================
+   FIX 1: NAVBAR & SIDEBAR LAYOUT OVERLAP (SETTINGS & REPORT PAGE)
+   ========================================================================== */
+/* Prevents header content from being hidden behind the 56px top navbar */
+body {
+    padding-top: 56px !important;
+}
+
+/* Flex layout ensuring main content never overlaps or hides the sidebar */
+#wrapper {
+    display: flex !important;
+    width: 100% !important;
+    min-height: calc(100vh - 56px) !important;
+}
+
+/* Keep sidebar fixed width and prevent squishing */
+.sidebar,
+#sidebar,
+#sidebarMenu {
+    flex-shrink: 0 !important;
+    width: var(--sidebar-width) !important;
+    min-height: calc(100vh - 56px) !important;
+    z-index: 1000;
+}
+
+/* Ensure main content flexes properly without pushing into the sidebar */
+.main-content,
+main,
+.report-main-content {
+    flex-grow: 1 !important;
+    min-width: 0 !important; /* Critical: prevents grid/flex overflow */
+    padding: 1.5rem;
+    background-color: var(--bg-main);
+}
+
+/* ==========================================================================
+   FIX 2: COLORFUL KPI CARDS (DASHBOARD & REPORT PAGE IN DARK MODE)
+   ========================================================================== */
+/* Give KPI cards distinct colorful gradient backgrounds in both Light & Dark Mode */
+.kpi-card,
+.card.kpi {
+    border: none !important;
+    color: #ffffff !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 10px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.kpi-card:hover,
+.card.kpi:hover {
+    transform: translateY(-3px);
+}
+
+/* Color Palette for KPI Cards */
+.kpi-card:nth-child(1),
+.card.kpi:nth-child(1),
+.kpi-primary {
+    background: linear-gradient(135deg, #0d6efd, #0a58ca) !important;
+}
+
+.kpi-card:nth-child(2),
+.card.kpi:nth-child(2),
+.kpi-success {
+    background: linear-gradient(135deg, #198754, #146c43) !important;
+}
+
+.kpi-card:nth-child(3),
+.card.kpi:nth-child(3),
+.kpi-warning {
+    background: linear-gradient(135deg, #fd7e14, #d96102) !important;
+}
+
+.kpi-card:nth-child(4),
+.card.kpi:nth-child(4),
+.kpi-info {
+    background: linear-gradient(135deg, #0dcaf0, #0aa2c0) !important;
+}
+
+/* Ensure text and sub-labels remain high contrast and visible */
+.kpi-card *,
+.card.kpi * {
+    color: #ffffff !important;
+}
+
+.kpi-card .text-muted,
+.card.kpi .text-muted,
+.kpi-card small,
+.card.kpi small {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* ==========================================================================
+   FIX 3: LOGO PREVIEW STYLING (SETTINGS PAGE)
+   ========================================================================== */
+/* Clean box container for image upload preview */
+.logo-preview-box {
+    width: 120px;
+    height: 80px;
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-card);
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.logo-preview-box img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+/* Hide broken image alt icons when no image is selected */
+img[src=""], img:not([src]) {
+    opacity: 0;
+}
+
+/* ==========================================================================
+   DASHBOARD COLORFUL KPI CARDS (EXACT MATCH FOR LIGHT & DARK MODE)
+   ========================================================================== */
+
+/* Core Dashboard Card Styling */
+.card-kpi {
+    border: none !important;
+    border-radius: 8px !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-kpi:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Force all child elements & text inside KPI cards to render white */
+.card-kpi *,
+.card-kpi .card-body * {
+    color: #ffffff !important;
+}
+
+.card-kpi .kpi-title {
+    font-size: 0.825rem;
+    font-weight: 500;
+    opacity: 0.9;
+    margin-bottom: 0.25rem;
+}
+
+.card-kpi .kpi-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0;
+}
+
+.card-kpi .kpi-icon {
+    font-size: 2.2rem;
+    opacity: 0.75;
+}
+
+/* --- Color Classes (Exact Match to Screenshot) --- */
+
+/* 1. Today's Sales (Bright Blue) */
+.kpi-blue {
+    background-color: #0d6efd !important;
+}
+
+/* 2. Today's Profit (Forest Green) */
+.kpi-green {
+    background-color: #198754 !important;
+}
+
+/* 3. Monthly Sales (Cyan / Turquoise) */
+.kpi-cyan {
+    background-color: #0dcaf0 !important;
+}
+
+/* 4. Today's Bills (Dark Charcoal) */
+.kpi-dark {
+    background-color: #212529 !important;
+}
+
+/* 5. Stock Quantity (Slate Grey) */
+.kpi-grey {
+    background-color: #6c757d !important;
+}
+
+/* 6. Low Stock Items (Crimson Red) */
+.kpi-red {
+    background-color: #dc3545 !important;
+}
+
+/* --- Dark Mode Background Overrides --- */
+body.dark-mode .kpi-blue, [data-bs-theme="dark"] .kpi-blue { background-color: #0d6efd !important; }
+body.dark-mode .kpi-green, [data-bs-theme="dark"] .kpi-green { background-color: #198754 !important; }
+body.dark-mode .kpi-cyan, [data-bs-theme="dark"] .kpi-cyan { background-color: #0dcaf0 !important; }
+body.dark-mode .kpi-dark, [data-bs-theme="dark"] .kpi-dark { background-color: #2b3035 !important; }
+body.dark-mode .kpi-grey, [data-bs-theme="dark"] .kpi-grey { background-color: #6c757d !important; }
+body.dark-mode .kpi-red, [data-bs-theme="dark"] .kpi-red { background-color: #dc3545 !important; }
+
+/* ==========================================================================
+   GLOBAL BACKGROUND & SPACE GAP FIX
+   ========================================================================== */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-main, #f8f9fa);
+}
+
+/* Ensure Dark Mode background covers full viewport height without white space */
+body.dark-mode, 
+[data-bs-theme="dark"], 
+[data-bs-theme="dark"] body {
+    background-color: #121212 !important;
+    color: #e0e0e0 !important;
+}
+
+/* Wrapper layout fill */
+#wrapper {
+    display: flex;
+    min-height: calc(100vh - 56px);
+    background-color: inherit;
+}
+
+main, .main-content {
+    flex: 1;
+    min-height: calc(100vh - 56px);
+    background-color: inherit;
+}
+
+/* ==========================================================================
+   REPORT.HTML KPI CARDS FIX (ZERO HTML MODIFICATIONS NEEDED)
+   ========================================================================== */
+
+/* General Card Styling */
+.card.kpi, 
+.kpi {
+    border: none !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* --------------------------------------------------------------------------
+   1. SALES REVENUE (Vibrant Blue)
+   -------------------------------------------------------------------------- */
+div[class*="col"]:nth-child(1) .card.kpi,
+div[class*="col"]:nth-child(1) .kpi,
+.card.kpi:nth-child(1) {
+    background-color: #0d6efd !important;
+}
+
+div[class*="col"]:nth-child(1) .card.kpi *,
+div[class*="col"]:nth-child(1) .kpi * {
+    color: #ffffff !important;
+}
+
+div[class*="col"]:nth-child(1) .card.kpi .text-muted,
+div[class*="col"]:nth-child(1) .card.kpi small {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* --------------------------------------------------------------------------
+   2. ESTIMATED COST (Slate Grey)
+   -------------------------------------------------------------------------- */
+div[class*="col"]:nth-child(2) .card.kpi,
+div[class*="col"]:nth-child(2) .kpi,
+.card.kpi:nth-child(2) {
+    background-color: #6c757d !important;
+}
+
+div[class*="col"]:nth-child(2) .card.kpi *,
+div[class*="col"]:nth-child(2) .kpi * {
+    color: #ffffff !important;
+}
+
+div[class*="col"]:nth-child(2) .card.kpi .text-muted,
+div[class*="col"]:nth-child(2) .card.kpi small {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* --------------------------------------------------------------------------
+   3. TOTAL DISCOUNT (Amber Yellow)
+   -------------------------------------------------------------------------- */
+div[class*="col"]:nth-child(3) .card.kpi,
+div[class*="col"]:nth-child(3) .kpi,
+.card.kpi:nth-child(3) {
+    background-color: #ffc107 !important;
+}
+
+div[class*="col"]:nth-child(3) .card.kpi *,
+div[class*="col"]:nth-child(3) .kpi * {
+    color: #000000 !important;
+}
+
+div[class*="col"]:nth-child(3) .card.kpi .text-muted,
+div[class*="col"]:nth-child(3) .card.kpi small {
+    color: rgba(0, 0, 0, 0.75) !important;
+}
+
+/* --------------------------------------------------------------------------
+   4. ESTIMATED PROFIT (Forest Green)
+   -------------------------------------------------------------------------- */
+div[class*="col"]:nth-child(4) .card.kpi,
+div[class*="col"]:nth-child(4) .kpi,
+.card.kpi:nth-child(4) {
+    background-color: #198754 !important;
+}
+
+div[class*="col"]:nth-child(4) .card.kpi *,
+div[class*="col"]:nth-child(4) .kpi * {
+    color: #ffffff !important;
+}
+
+div[class*="col"]:nth-child(4) .card.kpi .text-muted,
+div[class*="col"]:nth-child(4) .card.kpi small {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* ==========================================================================
+   REPORT PAGE ONLY - KPI CARD COLORS
+   (Strictly isolated to report.html; does NOT affect any other page)
+   ========================================================================== */
+
+/* 1. SALES REVENUE (Vibrant Blue) */
+body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(1) .card,
+body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(1) [class*="card"] {
+    background-color: #0d6efd !important;
+    background: #0d6efd !important;
+    color: #ffffff !important;
+}
+body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(1) .card * {
+    color: #ffffff !important;
+}
+
+/* 2. ESTIMATED COST (Slate Grey) */
+body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(2) .card,
+body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(2) [class*="card"] {
+    background-color: #6c757d !important;
+    background: #6c757d !important;
+    color: #ffffff !important;
+}
+body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(2) .card * {
+    color: #ffffff !important;
+}
+
+/* 3. TOTAL DISCOUNT (Amber Yellow) */
+body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(3) .card,
+body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(3) [class*="card"] {
+    background-color: #ffc107 !important;
+    background: #ffc107 !important;
+    color: #000000 !important;
+}
+body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(3) .card * {
+    color: #000000 !important;
+}
+body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(3) .card small,
+body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(3) .card .text-muted {
+    color: rgba(0, 0, 0, 0.75) !important;
+}
+
+/* 4. ESTIMATED PROFIT (Forest Green) */
+body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(4) .card,
+body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(4) [class*="card"] {
+    background-color: #198754 !important;
+    background: #198754 !important;
+    color: #ffffff !important;
+}
+body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(4) .card * {
+    color: #ffffff !important;
+}
