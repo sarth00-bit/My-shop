@@ -1,20 +1,15 @@
 // =========================================
-// INVOICES.JS — fully connected to MySQL
-// via Node.js API. No LocalStorage used.
+// invoices.js — reads API URL from config.js
 // =========================================
-
-const NODE_API = 'https://enable-empathic-murmuring.ngrok-free.dev/api';
+const NODE_API = window.APP_CONFIG.NODE_API;
 
 document.addEventListener('DOMContentLoaded', async () => {
 
-    // =========================================
-    // DOM ELEMENTS
-    // =========================================
+    // ── DOM ELEMENTS ──────────────────────────────────────────────────────────
     const invoicesTableBody   = document.getElementById('invoicesTableBody');
     const searchInput         = document.getElementById('searchInvoiceInput');
     const filterPaymentMethod = document.getElementById('filterPaymentMethod');
 
-    // Modal elements (already in invoices.html — we populate them, not rebuild them)
     const modalInvoiceNo      = document.getElementById('modalInvoiceNo');
     const modalInvoiceDate    = document.getElementById('modalInvoiceDate');
     const modalCustName       = document.getElementById('modalCustName');
@@ -27,12 +22,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const modalGrandTotal     = document.getElementById('modalGrandTotal');
     const btnPrintInvoice     = document.getElementById('btnPrintInvoice');
 
-    let allInvoices = [];   // full list from MySQL
-    let bsModal     = null; // Bootstrap modal instance
+    let allInvoices = [];
+    let bsModal     = null;
 
-    // =========================================
-    // HELPERS
-    // =========================================
+    // ── HELPERS ───────────────────────────────────────────────────────────────
     function fmt(val) {
         const n = parseFloat(val);
         return isNaN(n) ? '0.00' : n.toFixed(2);
@@ -47,13 +40,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // =========================================
-    // 1. LOAD ALL INVOICES FROM MYSQL
-    // =========================================
+    // ── 1. LOAD ALL INVOICES ──────────────────────────────────────────────────
     async function loadInvoices() {
         showTableLoading();
         try {
-            const res = await fetch(`${NODE_API}/sales`);
+            const res = await apiFetch(`${NODE_API}/sales`);
             if (!res.ok) throw new Error(`Server error ${res.status}`);
             allInvoices = await res.json();
             applyFiltersAndRender();
@@ -63,11 +54,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // =========================================
-    // 2. FILTER + RENDER TABLE
-    // =========================================
+    // ── 2. FILTER + RENDER TABLE ──────────────────────────────────────────────
     function applyFiltersAndRender() {
-        const query      = (searchInput?.value || '').toLowerCase().trim();
+        const query        = (searchInput?.value || '').toLowerCase().trim();
         const methodFilter = (filterPaymentMethod?.value || '').toLowerCase();
 
         const filtered = allInvoices.filter(inv => {
@@ -111,23 +100,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             </tr>`).join('');
     }
 
-    // =========================================
-    // 3. SEARCH + PAYMENT FILTER LISTENERS
-    // Both wired — filterPaymentMethod was
-    // never connected in the old invoices.js
-    // =========================================
+    // ── 3. FILTER LISTENERS ───────────────────────────────────────────────────
     searchInput?.addEventListener('input', applyFiltersAndRender);
     filterPaymentMethod?.addEventListener('change', applyFiltersAndRender);
 
-    // =========================================
-    // 4. VIEW INVOICE MODAL
-    // Fetches full sale detail (with line items)
-    // from GET /api/sales/:id and populates the
-    // existing modal in invoices.html — does NOT
-    // rebuild it from scratch like the old code did
-    // =========================================
-    window.viewInvoiceModal = async function(saleId) {
-        // Show modal immediately with loading state
+    // ── 4. VIEW INVOICE MODAL ─────────────────────────────────────────────────
+    window.viewInvoiceModal = async function (saleId) {
         setModalLoading(saleId);
         const modalEl = document.getElementById('invoiceDetailModal');
         if (!modalEl) return;
@@ -135,7 +113,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         bsModal.show();
 
         try {
-            const res = await fetch(`${NODE_API}/sales/${saleId}`);
+            const res = await apiFetch(`${NODE_API}/sales/${saleId}`);
             if (!res.ok) throw new Error(`Could not load invoice #${saleId}`);
             const inv = await res.json();
             populateModal(inv);
@@ -146,16 +124,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     function setModalLoading(saleId) {
-        if (modalInvoiceNo)  modalInvoiceNo.textContent  = `#INV-${saleId}`;
-        if (modalInvoiceDate)modalInvoiceDate.textContent = 'Loading…';
-        if (modalCustName)   modalCustName.textContent    = '—';
-        if (modalCustPhone)  modalCustPhone.textContent   = '—';
+        if (modalInvoiceNo)     modalInvoiceNo.textContent     = `#INV-${saleId}`;
+        if (modalInvoiceDate)   modalInvoiceDate.textContent   = 'Loading…';
+        if (modalCustName)      modalCustName.textContent      = '—';
+        if (modalCustPhone)     modalCustPhone.textContent     = '—';
         if (modalPaymentMethod) modalPaymentMethod.textContent = '—';
-        if (modalInvoiceItems)  modalInvoiceItems.innerHTML  = '<tr><td colspan="6" class="text-center text-muted py-3">Loading items…</td></tr>';
-        if (modalSubtotal)   modalSubtotal.textContent    = '₹—';
-        if (modalGST)        modalGST.textContent         = '₹—';
-        if (modalDiscount)   modalDiscount.textContent    = '₹—';
-        if (modalGrandTotal) modalGrandTotal.textContent  = '₹—';
+        if (modalInvoiceItems)  modalInvoiceItems.innerHTML    = '<tr><td colspan="6" class="text-center text-muted py-3">Loading items…</td></tr>';
+        if (modalSubtotal)      modalSubtotal.textContent      = '₹—';
+        if (modalGST)           modalGST.textContent           = '₹—';
+        if (modalDiscount)      modalDiscount.textContent      = '₹—';
+        if (modalGrandTotal)    modalGrandTotal.textContent    = '₹—';
     }
 
     function setModalError(msg) {
@@ -165,14 +143,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function populateModal(inv) {
-        // Header
         if (modalInvoiceNo)     modalInvoiceNo.textContent     = `#INV-${inv.id}`;
         if (modalInvoiceDate)   modalInvoiceDate.textContent   = formatDateTime(inv.sale_date);
         if (modalCustName)      modalCustName.textContent      = inv.customer_name || 'Walk-in Customer';
-        if (modalCustPhone)     modalCustPhone.textContent     = '—';  // not stored in DB currently
+        if (modalCustPhone)     modalCustPhone.textContent     = '—';
         if (modalPaymentMethod) modalPaymentMethod.textContent = inv.payment_method || 'Cash';
 
-        // Line items from sale_items JOIN products
         const items = inv.items || [];
         if (modalInvoiceItems) {
             if (!items.length) {
@@ -194,7 +170,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        // Totals
         const cgst     = parseFloat(inv.cgst_amount || 0);
         const sgst     = parseFloat(inv.sgst_amount || 0);
         const totalGst = cgst + sgst;
@@ -205,16 +180,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (modalGrandTotal) modalGrandTotal.textContent = `₹${fmt(inv.total_amount)}`;
     }
 
-    // =========================================
-    // 5. PRINT BUTTON
-    // =========================================
+    // ── 5. PRINT ──────────────────────────────────────────────────────────────
     if (btnPrintInvoice) {
         btnPrintInvoice.addEventListener('click', () => window.print());
     }
 
-    // =========================================
-    // LOADING / ERROR STATES FOR TABLE
-    // =========================================
+    // ── LOADING / ERROR STATES ────────────────────────────────────────────────
     function showTableLoading() {
         if (invoicesTableBody) {
             invoicesTableBody.innerHTML = `
@@ -231,13 +202,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <tr><td colspan="7" class="text-center text-danger py-4">
                     <i class="bi bi-exclamation-triangle display-6 d-block mb-2"></i>
                     Could not load invoices: ${msg}<br>
-                    <small class="text-muted">Make sure Node.js server is running on port 5000.</small>
+                    <small class="text-muted">Make sure the Node.js server is running and ngrok URL is up to date in <code>js/config.js</code>.</small>
                 </td></tr>`;
         }
     }
 
-    // =========================================
-    // INITIAL LOAD
-    // =========================================
+    // ── INITIAL LOAD ──────────────────────────────────────────────────────────
     await loadInvoices();
 });
