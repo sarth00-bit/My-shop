@@ -1,11 +1,10 @@
 // =========================================
-// Product.js — reads API URL from config.js
+// Product.js — uses config.js for API URL
+// NODE_API comes from config.js
 // =========================================
-const NODE_API = window.APP_CONFIG.NODE_API;
 
 document.addEventListener('DOMContentLoaded', async () => {
 
-    // ── DOM ELEMENTS ──────────────────────────────────────────────────────────
     const productsTableBody    = document.getElementById('productsTableBody');
     const searchInput          = document.querySelector('input[placeholder*="Search"]') || document.getElementById('productSearchInput');
     const categoryFilter       = document.getElementById('categoryFilter');
@@ -37,7 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 productsTableBody.innerHTML = `
                     <tr><td colspan="7" class="text-center text-danger py-4">
                         <i class="bi bi-exclamation-triangle display-6 d-block mb-2"></i>
-                        Could not load products. Make sure Node.js server is running and ngrok URL is up to date in <code>js/config.js</code>.
+                        Could not load products. Make sure Node.js server is running and ngrok is active.
                     </td></tr>`;
             }
         }
@@ -72,8 +71,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         filtered.forEach(p => {
             const stock = parseInt(p.stock_quantity || 0, 10);
             let stockBadge = '<span class="badge bg-success">In Stock</span>';
-            if (stock === 0)       stockBadge = '<span class="badge bg-danger">Out of Stock</span>';
-            else if (stock < 10)   stockBadge = '<span class="badge bg-warning text-dark">Low Stock</span>';
+            if (stock === 0)   stockBadge = '<span class="badge bg-danger">Out of Stock</span>';
+            else if (stock < 10) stockBadge = '<span class="badge bg-warning text-dark">Low Stock</span>';
 
             const row = document.createElement('tr');
             row.innerHTML = `
@@ -125,7 +124,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const res = await apiFetch(url, {
                     method,
-                    body: JSON.stringify(productData)
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify(productData)
                 });
 
                 if (!res.ok) {
@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ── 5. OPEN EDIT MODAL ────────────────────────────────────────────────────
-    window.openEditModal = function (productId) {
+    window.openEditModal = function(productId) {
         const p = allProducts.find(prod => prod.id === productId);
         if (!p) return;
 
@@ -168,7 +168,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (productModalEl) new bootstrap.Modal(productModalEl).show();
     };
 
-    // Reset form when opening add-new modal
     const btnAddProduct = document.querySelector('[data-bs-target="#productModal"]');
     if (btnAddProduct) {
         btnAddProduct.addEventListener('click', () => {
@@ -179,7 +178,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ── 6. DELETE PRODUCT ─────────────────────────────────────────────────────
-    window.deleteProduct = async function (productId) {
+    window.deleteProduct = async function(productId) {
         const prod = allProducts.find(p => p.id === productId);
         if (!prod) return;
         if (!confirm(`Delete "${prod.name}"? This cannot be undone.`)) return;
@@ -197,12 +196,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // ── 7. OPEN ADD MODAL FROM DASHBOARD LINK ────────────────────────────────
+    // ── 7. AUTO-OPEN MODAL FROM DASHBOARD LINK ───────────────────────────────
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('openModal') === 'true' && productModalEl) {
         setTimeout(() => new bootstrap.Modal(productModalEl).show(), 300);
     }
 
-    // ── INITIAL LOAD ──────────────────────────────────────────────────────────
     await loadProducts();
 });
