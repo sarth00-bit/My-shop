@@ -1,12 +1,10 @@
 // =========================================
-// API ENDPOINTS
+// dashboard.js — reads API URL from config.js
 // =========================================
-const NODE_API   = 'https://enable-empathic-murmuring.ngrok-free.dev/api';
-const PYTHON_API = 'https://enable-empathic-murmuring.ngrok-free.dev/python-api';
+const NODE_API   = window.APP_CONFIG.NODE_API;
+const PYTHON_API = window.APP_CONFIG.PYTHON_API;
 
-// =========================================
-// AUTO-REFRESH — every 15 seconds
-// =========================================
+// ── AUTO-REFRESH every 15 seconds ─────────────────────────────────────────────
 const REFRESH_INTERVAL_MS = 15000;
 let refreshTimer = null;
 
@@ -21,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Instant refresh when user returns to this tab from billing/product page
+    // Instant refresh when user returns to this tab
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
             loadDashboard();
@@ -47,15 +45,13 @@ function updateRefreshBadge() {
     if (ts)    ts.textContent = `Last updated: ${new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
 }
 
-// =========================================
-// MAIN LOAD
-// =========================================
+// ── MAIN LOAD ─────────────────────────────────────────────────────────────────
 async function loadDashboard() {
     clearErrorBanner();
     try {
         const [productsRes, analyticsRes] = await Promise.all([
-            fetch(`${NODE_API}/products`),
-            fetch(`${PYTHON_API}/analytics/dashboard`)
+            apiFetch(`${NODE_API}/products`),
+            apiFetch(`${PYTHON_API}/analytics/dashboard`)
         ]);
 
         if (!productsRes.ok)  throw new Error(`Node.js error (${productsRes.status})`);
@@ -77,9 +73,7 @@ async function loadDashboard() {
     }
 }
 
-// =========================================
-// KPI CARDS
-// =========================================
+// ── KPI CARDS ─────────────────────────────────────────────────────────────────
 function updateKPICards(data) {
     setText('todaySales',    `₹${toFixed2(data.today_sales)}`);
     setText('todayProfit',   `₹${toFixed2(data.today_profit)}`);
@@ -89,13 +83,7 @@ function updateKPICards(data) {
     setText('lowStockItems',  data.low_stock_count         ?? 0);
 }
 
-// =========================================
-// RECENT TRANSACTIONS TABLE
-// BUG 5 FIX: sale_date is now a full ISO string
-// "2026-09-06T14:32:00" from Flask — JS Date()
-// parses this as LOCAL time (not UTC), so the
-// date shown is always correct in any timezone.
-// =========================================
+// ── RECENT TRANSACTIONS TABLE ──────────────────────────────────────────────────
 function renderRecentTransactions(sales) {
     const tbody = document.getElementById('recentTransactionsBody');
     if (!tbody) return;
@@ -106,7 +94,6 @@ function renderRecentTransactions(sales) {
     }
 
     tbody.innerHTML = sales.map(sale => {
-        // sale_date is "YYYY-MM-DDTHH:MM:SS" — parsed as local time correctly
         const dt      = new Date(sale.sale_date);
         const dateStr = isNaN(dt)
             ? '—'
@@ -128,9 +115,7 @@ function renderRecentTransactions(sales) {
     }).join('');
 }
 
-// =========================================
-// NEW STOCK LIST
-// =========================================
+// ── NEW STOCK LIST ─────────────────────────────────────────────────────────────
 function renderNewStockList(products) {
     const container = document.getElementById('newStockList');
     if (!container) return;
@@ -140,7 +125,6 @@ function renderNewStockList(products) {
         return;
     }
 
-    // Highest DB id = most recently added product
     const recent = [...products].sort((a, b) => b.id - a.id).slice(0, 4);
 
     container.innerHTML = recent.map(p => `
@@ -157,9 +141,7 @@ function renderNewStockList(products) {
     `).join('');
 }
 
-// =========================================
-// CHART 1 — SALES LINE
-// =========================================
+// ── CHART 1 — SALES LINE ──────────────────────────────────────────────────────
 function renderSalesOverviewChart(last7Days) {
     const canvas = document.getElementById('salesOverviewChart');
     if (!canvas) return;
@@ -188,9 +170,7 @@ function renderSalesOverviewChart(last7Days) {
     });
 }
 
-// =========================================
-// CHART 2 — CATEGORY PIE
-// =========================================
+// ── CHART 2 — CATEGORY PIE ────────────────────────────────────────────────────
 function renderCategoryPieChart(categoryTotals) {
     const canvas = document.getElementById('salesCategoryChart');
     if (!canvas) return;
@@ -220,9 +200,7 @@ function renderCategoryPieChart(categoryTotals) {
     });
 }
 
-// =========================================
-// HELPERS
-// =========================================
+// ── HELPERS ───────────────────────────────────────────────────────────────────
 function setText(id, value) {
     const el = document.getElementById(id);
     if (el) el.textContent = value;
@@ -233,7 +211,6 @@ function toFixed2(val) {
 }
 
 function formatDateLabel(dateStr) {
-    // dateStr is "YYYY-MM-DD" for chart labels — append T12:00:00 to avoid UTC offset shifting
     return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 }
 
@@ -244,11 +221,11 @@ function clearErrorBanner() {
 
 function showErrorBanner(msg) {
     clearErrorBanner();
-    const main = document.querySelector('main');
+    const main   = document.querySelector('main');
     if (!main) return;
     const banner     = document.createElement('div');
     banner.id        = 'dashboard-error-banner';
     banner.className = 'alert alert-danger mx-3 mt-3';
-    banner.innerHTML = `<i class="bi bi-exclamation-triangle me-2"></i><strong>Server Error:</strong> ${msg}. Make sure both servers are running.`;
+    banner.innerHTML = `<i class="bi bi-exclamation-triangle me-2"></i><strong>Server Error:</strong> ${msg}. Make sure both servers are running and ngrok URL in <code>js/config.js</code> is up to date.`;
     main.prepend(banner);
 }
