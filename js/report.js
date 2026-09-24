@@ -1,14 +1,10 @@
 // =========================================
-// REPORT.JS — connected to Node.js + Flask
-// No LocalStorage used anywhere
+// report.js — uses config.js for API URL
+// NODE_API and PYTHON_API come from config.js
 // =========================================
-
-const NODE_API   = 'https://enable-empathic-murmuring.ngrok-free.dev/api';
-const PYTHON_API = 'https://enable-empathic-murmuring.ngrok-free.dev/python-api';
 
 document.addEventListener('DOMContentLoaded', async () => {
 
-    // ── DOM REFS ────────────────────────────────────────────────────────────
     const filterForm       = document.getElementById('filterForm');
     const filterPresetDate = document.getElementById('filterPresetDate');
     const filterStartDate  = document.getElementById('filterStartDate');
@@ -21,7 +17,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnExportCSV     = document.getElementById('btnExportCSV');
     const btnExportPDF     = document.getElementById('btnExportPDF');
 
-    // KPI
     const kpiRevenue    = document.getElementById('kpiRevenue');
     const kpiCost       = document.getElementById('kpiCost');
     const kpiDiscount   = document.getElementById('kpiDiscount');
@@ -29,23 +24,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const kpiSalesCount = document.getElementById('kpiSalesCount');
     const kpiMargin     = document.getElementById('kpiMargin');
 
-    // Table bodies
     const salesTbody     = document.getElementById('salesReportTableBody');
     const productTbody   = document.getElementById('productReportTableBody');
     const customerTbody  = document.getElementById('customerReportTableBody');
     const inventoryTbody = document.getElementById('inventoryReportTableBody');
 
-    // Inventory KPIs
     const invTotalItems  = document.getElementById('invTotalItems');
     const invStockValue  = document.getElementById('invStockValue');
     const invAlertCount  = document.getElementById('invAlertCount');
 
-    // ── STATE ───────────────────────────────────────────────────────────────
-    let allSales    = [];   // from GET /api/sales
-    let allProducts = [];   // from GET /api/products
-    let perfData    = [];   // from GET /api/analytics/product-performance
+    let allSales    = [];
+    let allProducts = [];
+    let perfData    = [];
 
-    // ── HELPERS ─────────────────────────────────────────────────────────────
     function fmt(val) {
         const n = parseFloat(val);
         return isNaN(n) ? '0.00' : n.toFixed(2);
@@ -59,14 +50,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function setKPI(el, val) { if (el) el.textContent = val; }
 
-    // ── 1. LOAD DATA FROM APIs ───────────────────────────────────────────────
+    // ── 1. LOAD DATA ──────────────────────────────────────────────────────────
     async function loadAllData() {
         showLoading();
         try {
             const [salesRes, productsRes, perfRes] = await Promise.all([
-                fetch(`${NODE_API}/sales`),
-                fetch(`${NODE_API}/products`),
-                fetch(`${PYTHON_API}/analytics/product-performance`)
+                apiFetch(`${NODE_API}/sales`),
+                apiFetch(`${NODE_API}/products`),
+                apiFetch(`${PYTHON_API}/analytics/product-performance`)
             ]);
 
             if (!salesRes.ok)    throw new Error(`Sales API error (${salesRes.status})`);
@@ -84,8 +75,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // ── 2. POPULATE CATEGORY DROPDOWN FROM REAL PRODUCTS ────────────────────
+    // ── 2. CATEGORY DROPDOWN ──────────────────────────────────────────────────
     function populateCategoryFilter() {
+        if (!filterCategory) return;
         const cats = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
         filterCategory.innerHTML = '<option value="all">All Categories</option>';
         cats.forEach(cat => {
@@ -95,12 +87,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // ── 3. FILTER SALES ──────────────────────────────────────────────────────
+    // ── 3. FILTER SALES ───────────────────────────────────────────────────────
     function filterSales() {
-        const start     = filterStartDate.value  ? new Date(filterStartDate.value + 'T00:00:00') : null;
-        const end       = filterEndDate.value    ? new Date(filterEndDate.value   + 'T23:59:59') : null;
-        const payMethod = filterPayment.value;
-        const custQuery = (filterCustomer.value || '').toLowerCase().trim();
+        const start     = filterStartDate?.value ? new Date(filterStartDate.value + 'T00:00:00') : null;
+        const end       = filterEndDate?.value   ? new Date(filterEndDate.value   + 'T23:59:59') : null;
+        const payMethod = filterPayment?.value   || 'all';
+        const custQuery = (filterCustomer?.value || '').toLowerCase().trim();
 
         return allSales.filter(s => {
             const dt = new Date(s.sale_date);
@@ -112,7 +104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // ── 4. RENDER ALL TABS ───────────────────────────────────────────────────
+    // ── 4. RENDER ALL TABS ────────────────────────────────────────────────────
     function renderReports() {
         const filtered = filterSales();
         renderKPIs(filtered);
@@ -122,17 +114,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderInventoryTab();
     }
 
-    // ── 4a. KPI CARDS ────────────────────────────────────────────────────────
     function renderKPIs(filtered) {
         let revenue = 0, cost = 0, discount = 0;
-
         filtered.forEach(s => {
             revenue  += parseFloat(s.total_amount || 0);
             discount += parseFloat(s.discount     || 0);
-            // cost_amount from DB; fallback = 70% of revenue
             cost     += parseFloat(s.cost_amount  || 0) || (parseFloat(s.total_amount || 0) * 0.70);
         });
-
         const profit = revenue - cost;
         const margin = revenue > 0 ? ((profit / revenue) * 100) : 0;
 
@@ -144,27 +132,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         setKPI(kpiMargin,     `${margin.toFixed(1)}%`);
     }
 
-    // ── 4b. SALES REPORT TABLE ───────────────────────────────────────────────
     function renderSalesTab(filtered) {
         if (!salesTbody) return;
         if (!filtered.length) {
             salesTbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No sales found for this filter.</td></tr>';
             return;
         }
-
         salesTbody.innerHTML = filtered.map(s => {
             const revenue  = parseFloat(s.total_amount || 0);
             const cost     = parseFloat(s.cost_amount  || 0) || (revenue * 0.70);
             const profit   = revenue - cost;
             const itemsCnt = parseInt(s.items_count   || 0);
-
             return `
                 <tr>
                     <td class="fw-bold text-primary">#INV-${s.id}</td>
                     <td>${fmtDate(s.sale_date)}</td>
-                    <td>
-                        <div class="fw-semibold">${s.customer_name || 'Walk-in'}</div>
-                    </td>
+                    <td><div class="fw-semibold">${s.customer_name || 'Walk-in'}</div></td>
                     <td><span class="badge bg-light text-dark border">${s.payment_method || 'Cash'}</span></td>
                     <td>${itemsCnt} item${itemsCnt !== 1 ? 's' : ''}</td>
                     <td class="fw-bold">₹${fmt(revenue)}</td>
@@ -173,25 +156,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         }).join('');
     }
 
-    // ── 4c. PRODUCT PERFORMANCE TABLE (from Flask) ───────────────────────────
     function renderProductTab() {
         if (!productTbody) return;
-        if (!perfData.length) {
+
+        // Merge perfData with allProducts for stock info
+        const map = {};
+        allProducts.forEach(p => {
+            map[p.id] = {
+                id: p.id, name: p.name, sku: p.brand || '—',
+                category: p.category || 'General',
+                stock: parseInt(p.stock_quantity || 0, 10),
+                qty_sold: 0, revenue: 0
+            };
+        });
+        perfData.forEach(p => {
+            if (map[p.product_id]) {
+                map[p.product_id].qty_sold = p.qty_sold || 0;
+                map[p.product_id].revenue  = parseFloat(p.revenue || 0);
+            }
+        });
+
+        const list = Object.values(map).sort((a, b) => b.revenue - a.revenue);
+
+        if (!list.length) {
             productTbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No product data found.</td></tr>';
             return;
         }
 
-        productTbody.innerHTML = perfData.map(p => {
+        productTbody.innerHTML = list.map(p => {
             let badge = '<span class="badge bg-success">In Stock</span>';
-            if (p.status === 'Out of Stock')  badge = '<span class="badge bg-danger">Out of Stock</span>';
-            else if (p.status === 'Low Stock') badge = '<span class="badge bg-warning text-dark">Low Stock</span>';
-            else if (p.status === 'Slow Moving') badge = '<span class="badge bg-secondary">Slow Moving</span>';
-
+            if (p.stock === 0)   badge = '<span class="badge bg-danger">Out of Stock</span>';
+            else if (p.stock < 10) badge = '<span class="badge bg-warning text-dark">Low Stock</span>';
             return `
                 <tr>
                     <td>
-                        <div class="fw-bold">${p.name}</div>
-                        <small class="text-muted">${p.sku || '—'}</small>
+                        <div class="fw-semibold">${p.name}</div>
+                        <small class="text-muted">${p.sku}</small>
                     </td>
                     <td><span class="badge bg-light text-dark border">${p.category}</span></td>
                     <td class="fw-bold">${p.qty_sold}</td>
@@ -202,11 +202,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }).join('');
     }
 
-    // ── 4d. CUSTOMER INSIGHTS TABLE (derived from filtered sales) ────────────
     function renderCustomerTab(filtered) {
         if (!customerTbody) return;
-
-        // Group by customer_name
         const map = {};
         filtered.forEach(s => {
             const key = s.customer_name || 'Walk-in Customer';
@@ -215,14 +212,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             map[key].totalSpent += parseFloat(s.total_amount || 0);
             if (new Date(s.sale_date) > new Date(map[key].lastDate)) map[key].lastDate = s.sale_date;
         });
-
         const list = Object.values(map).sort((a, b) => b.totalSpent - a.totalSpent);
-
         if (!list.length) {
             customerTbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No customer records found.</td></tr>';
             return;
         }
-
         customerTbody.innerHTML = list.map(c => `
             <tr>
                 <td class="fw-bold">${c.name}</td>
@@ -233,27 +227,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             </tr>`).join('');
     }
 
-    // ── 4e. INVENTORY VALUATION TABLE (from products) ────────────────────────
     function renderInventoryTab() {
         if (!inventoryTbody) return;
-
         let totalValue = 0, alertCount = 0;
-
         if (!allProducts.length) {
             inventoryTbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No inventory data found.</td></tr>';
         } else {
             inventoryTbody.innerHTML = allProducts.map(p => {
-                const stock    = parseInt(p.stock_quantity || 0, 10);
-                // mrp used as cost proxy; if mrp=0 estimate 70% of selling_price
-                const costPrice  = parseFloat(p.mrp || 0) || (parseFloat(p.selling_price || 0) * 0.70);
-                const sellPrice  = parseFloat(p.selling_price || 0);
-                const itemValue  = costPrice * stock;
-                totalValue      += itemValue;
-
+                const stock     = parseInt(p.stock_quantity || 0, 10);
+                const costPrice = parseFloat(p.mrp || 0) || (parseFloat(p.selling_price || 0) * 0.70);
+                const sellPrice = parseFloat(p.selling_price || 0);
+                const itemValue = costPrice * stock;
+                totalValue     += itemValue;
                 let badge = '<span class="badge bg-success">In Stock</span>';
                 if (stock === 0)   { badge = '<span class="badge bg-danger">Out of Stock</span>'; alertCount++; }
                 else if (stock < 10) { badge = '<span class="badge bg-warning text-dark">Low Stock</span>'; alertCount++; }
-
                 return `
                     <tr>
                         <td class="fw-bold">${p.brand || '—'}</td>
@@ -267,83 +255,82 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </tr>`;
             }).join('');
         }
-
         if (invTotalItems) invTotalItems.textContent = allProducts.length;
         if (invStockValue)  invStockValue.textContent  = `₹${fmt(totalValue)}`;
         if (invAlertCount)  invAlertCount.textContent  = `${alertCount} Items`;
     }
 
-    // ── 5. FILTER CONTROLS ───────────────────────────────────────────────────
-    filterPresetDate.addEventListener('change', (e) => {
-        const val   = e.target.value;
-        const today = new Date();
-
-        filterStartDate.value = '';
-        filterEndDate.value   = '';
-
-        if (val === 'today') {
-            const d = today.toISOString().split('T')[0];
-            filterStartDate.value = d; filterEndDate.value = d;
-        } else if (val === 'this_week') {
-            const sun = new Date(today); sun.setDate(today.getDate() - today.getDay());
-            filterStartDate.value = sun.toISOString().split('T')[0];
-            filterEndDate.value   = today.toISOString().split('T')[0];
-        } else if (val === 'this_month') {
-            const first = new Date(today.getFullYear(), today.getMonth(), 1);
-            filterStartDate.value = first.toISOString().split('T')[0];
-            filterEndDate.value   = today.toISOString().split('T')[0];
-        }
-    });
-
-    filterForm.addEventListener('submit', (e) => { e.preventDefault(); renderReports(); });
-
-    btnResetFilter.addEventListener('click', () => {
-        filterForm.reset();
-        filterStartDate.value = '';
-        filterEndDate.value   = '';
-        renderReports();
-    });
-
-    // ── 6. EXPORT CSV ────────────────────────────────────────────────────────
-    btnExportCSV.addEventListener('click', () => {
-        const filtered = filterSales();
-        if (!filtered.length) { alert('No data to export.'); return; }
-
-        const headers = ['Invoice ID','Date','Customer','Payment Method','Items','Revenue (₹)','Discount (₹)','Est. Profit (₹)'];
-        const rows    = filtered.map(s => {
-            const rev    = parseFloat(s.total_amount || 0);
-            const cost   = parseFloat(s.cost_amount  || 0) || rev * 0.70;
-            return [
-                `#INV-${s.id}`,
-                fmtDate(s.sale_date),
-                `"${(s.customer_name || 'Walk-in').replace(/"/g,'""')}"`,
-                s.payment_method || 'Cash',
-                s.items_count || 0,
-                fmt(rev),
-                fmt(s.discount || 0),
-                fmt(rev - cost)
-            ].join(',');
+    // ── 5. FILTER CONTROLS ────────────────────────────────────────────────────
+    if (filterPresetDate) {
+        filterPresetDate.addEventListener('change', (e) => {
+            const val   = e.target.value;
+            const today = new Date();
+            if (filterStartDate) filterStartDate.value = '';
+            if (filterEndDate)   filterEndDate.value   = '';
+            if (val === 'today') {
+                const d = today.toISOString().split('T')[0];
+                if (filterStartDate) filterStartDate.value = d;
+                if (filterEndDate)   filterEndDate.value   = d;
+            } else if (val === 'this_week') {
+                const sun = new Date(today); sun.setDate(today.getDate() - today.getDay());
+                if (filterStartDate) filterStartDate.value = sun.toISOString().split('T')[0];
+                if (filterEndDate)   filterEndDate.value   = today.toISOString().split('T')[0];
+            } else if (val === 'this_month') {
+                const first = new Date(today.getFullYear(), today.getMonth(), 1);
+                if (filterStartDate) filterStartDate.value = first.toISOString().split('T')[0];
+                if (filterEndDate)   filterEndDate.value   = today.toISOString().split('T')[0];
+            }
         });
+    }
 
-        const csv  = [headers.join(','), ...rows].join('\n');
-        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-        const url  = URL.createObjectURL(blob);
-        const a    = document.createElement('a');
-        a.href     = url;
-        a.download = `SalesReport_${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-    });
+    if (filterForm) filterForm.addEventListener('submit', (e) => { e.preventDefault(); renderReports(); });
 
-    // ── 7. PRINT ─────────────────────────────────────────────────────────────
-    btnPrint.addEventListener('click', () => window.print());
+    if (btnResetFilter) {
+        btnResetFilter.addEventListener('click', () => {
+            if (filterForm)      filterForm.reset();
+            if (filterStartDate) filterStartDate.value = '';
+            if (filterEndDate)   filterEndDate.value   = '';
+            renderReports();
+        });
+    }
 
-    btnExportPDF.addEventListener('click', () => {
+    // ── 6. EXPORT CSV ─────────────────────────────────────────────────────────
+    if (btnExportCSV) {
+        btnExportCSV.addEventListener('click', () => {
+            const filtered = filterSales();
+            if (!filtered.length) { alert('No data to export.'); return; }
+            const headers = ['Invoice ID','Date','Customer','Payment Method','Items','Revenue (₹)','Discount (₹)','Est. Profit (₹)'];
+            const rows    = filtered.map(s => {
+                const rev  = parseFloat(s.total_amount || 0);
+                const cost = parseFloat(s.cost_amount  || 0) || rev * 0.70;
+                return [
+                    `#INV-${s.id}`,
+                    fmtDate(s.sale_date),
+                    `"${(s.customer_name || 'Walk-in').replace(/"/g,'""')}"`,
+                    s.payment_method || 'Cash',
+                    s.items_count || 0,
+                    fmt(rev),
+                    fmt(s.discount || 0),
+                    fmt(rev - cost)
+                ].join(',');
+            });
+            const csv  = [headers.join(','), ...rows].join('\n');
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href     = url;
+            a.download = `SalesReport_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+    }
+
+    if (btnPrint)     btnPrint.addEventListener('click', () => window.print());
+    if (btnExportPDF) btnExportPDF.addEventListener('click', () => {
         alert('Click "Print Report" → "Save as PDF" in your browser\'s print dialog.');
     });
 
-    // ── LOADING / ERROR STATES ───────────────────────────────────────────────
     function showLoading() {
         const msg = '<tr><td colspan="8" class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm me-2"></div>Loading from database…</td></tr>';
         [salesTbody, productTbody, customerTbody, inventoryTbody].forEach(t => { if (t) t.innerHTML = msg; });
@@ -353,11 +340,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const html = `<tr><td colspan="8" class="text-center text-danger py-4">
             <i class="bi bi-exclamation-triangle display-6 d-block mb-2"></i>
             Could not load report data: ${msg}<br>
-            <small class="text-muted">Make sure both servers are running.</small>
+            <small class="text-muted">Make sure both servers are running and ngrok is active.</small>
         </td></tr>`;
         [salesTbody, productTbody, customerTbody, inventoryTbody].forEach(t => { if (t) t.innerHTML = html; });
     }
 
-    // ── INITIAL LOAD ─────────────────────────────────────────────────────────
     await loadAllData();
 });
