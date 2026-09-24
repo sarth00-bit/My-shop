@@ -1,10 +1,9 @@
 // =========================================
-// dashboard.js — reads API URL from config.js
+// dashboard.js — uses config.js for API URL
 // =========================================
-const NODE_API   = window.APP_CONFIG.NODE_API;
-const PYTHON_API = window.APP_CONFIG.PYTHON_API;
 
-// ── AUTO-REFRESH every 15 seconds ─────────────────────────────────────────────
+// NODE_API and PYTHON_API come from config.js (loaded before this script)
+
 const REFRESH_INTERVAL_MS = 15000;
 let refreshTimer = null;
 
@@ -19,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Instant refresh when user returns to this tab
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
             loadDashboard();
@@ -45,7 +43,9 @@ function updateRefreshBadge() {
     if (ts)    ts.textContent = `Last updated: ${new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
 }
 
-// ── MAIN LOAD ─────────────────────────────────────────────────────────────────
+// =========================================
+// MAIN LOAD
+// =========================================
 async function loadDashboard() {
     clearErrorBanner();
     try {
@@ -73,7 +73,9 @@ async function loadDashboard() {
     }
 }
 
-// ── KPI CARDS ─────────────────────────────────────────────────────────────────
+// =========================================
+// KPI CARDS
+// =========================================
 function updateKPICards(data) {
     setText('todaySales',    `₹${toFixed2(data.today_sales)}`);
     setText('todayProfit',   `₹${toFixed2(data.today_profit)}`);
@@ -83,7 +85,9 @@ function updateKPICards(data) {
     setText('lowStockItems',  data.low_stock_count         ?? 0);
 }
 
-// ── RECENT TRANSACTIONS TABLE ──────────────────────────────────────────────────
+// =========================================
+// RECENT TRANSACTIONS TABLE
+// =========================================
 function renderRecentTransactions(sales) {
     const tbody = document.getElementById('recentTransactionsBody');
     if (!tbody) return;
@@ -115,7 +119,9 @@ function renderRecentTransactions(sales) {
     }).join('');
 }
 
-// ── NEW STOCK LIST ─────────────────────────────────────────────────────────────
+// =========================================
+// NEW STOCK LIST
+// =========================================
 function renderNewStockList(products) {
     const container = document.getElementById('newStockList');
     if (!container) return;
@@ -141,7 +147,9 @@ function renderNewStockList(products) {
     `).join('');
 }
 
-// ── CHART 1 — SALES LINE ──────────────────────────────────────────────────────
+// =========================================
+// CHART 1 — SALES LINE
+// =========================================
 function renderSalesOverviewChart(last7Days) {
     const canvas = document.getElementById('salesOverviewChart');
     if (!canvas) return;
@@ -170,7 +178,9 @@ function renderSalesOverviewChart(last7Days) {
     });
 }
 
-// ── CHART 2 — CATEGORY PIE ────────────────────────────────────────────────────
+// =========================================
+// CHART 2 — CATEGORY PIE
+// =========================================
 function renderCategoryPieChart(categoryTotals) {
     const canvas = document.getElementById('salesCategoryChart');
     if (!canvas) return;
@@ -200,7 +210,9 @@ function renderCategoryPieChart(categoryTotals) {
     });
 }
 
-// ── HELPERS ───────────────────────────────────────────────────────────────────
+// =========================================
+// HELPERS
+// =========================================
 function setText(id, value) {
     const el = document.getElementById(id);
     if (el) el.textContent = value;
@@ -221,11 +233,11 @@ function clearErrorBanner() {
 
 function showErrorBanner(msg) {
     clearErrorBanner();
-    const main   = document.querySelector('main');
+    const main = document.querySelector('main');
     if (!main) return;
     const banner     = document.createElement('div');
     banner.id        = 'dashboard-error-banner';
     banner.className = 'alert alert-danger mx-3 mt-3';
-    banner.innerHTML = `<i class="bi bi-exclamation-triangle me-2"></i><strong>Server Error:</strong> ${msg}. Make sure both servers are running and ngrok URL in <code>js/config.js</code> is up to date.`;
+    banner.innerHTML = `<i class="bi bi-exclamation-triangle me-2"></i><strong>Server Error:</strong> ${msg}. Make sure both servers are running and ngrok is active.`;
     main.prepend(banner);
 }
