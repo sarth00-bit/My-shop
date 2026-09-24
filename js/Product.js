@@ -1,39 +1,33 @@
 // =========================================
-// PRODUCT.JS — connected to Node.js + MySQL
-// All CRUD operations go to API, not LocalStorage
+// Product.js — reads API URL from config.js
 // =========================================
-
-const NODE_API = 'https://enable-empathic-murmuring.ngrok-free.dev/api';
+const NODE_API = window.APP_CONFIG.NODE_API;
 
 document.addEventListener('DOMContentLoaded', async () => {
 
-    // =========================================
-    // DOM ELEMENTS
-    // =========================================
-    const productsTableBody   = document.getElementById('productsTableBody');
-    const searchInput         = document.querySelector('input[placeholder*="Search"]') || document.getElementById('productSearchInput');
-    const categoryFilter      = document.getElementById('categoryFilter');
-    const productForm         = document.getElementById('productForm');
-    const productModalEl      = document.getElementById('productModal');
+    // ── DOM ELEMENTS ──────────────────────────────────────────────────────────
+    const productsTableBody    = document.getElementById('productsTableBody');
+    const searchInput          = document.querySelector('input[placeholder*="Search"]') || document.getElementById('productSearchInput');
+    const categoryFilter       = document.getElementById('categoryFilter');
+    const productForm          = document.getElementById('productForm');
+    const productModalEl       = document.getElementById('productModal');
 
-    const productIdInput      = document.getElementById('productId');
-    const productSkuInput     = document.getElementById('productSku');
-    const productNameInput    = document.getElementById('productName');
-    const productCategoryInput= document.getElementById('productCategory');
-    const productMrpInput     = document.getElementById('productMrp')     || document.getElementById('productPrice');
-    const productPriceInput   = document.getElementById('productPrice');
-    const productGstInput     = document.getElementById('productGst');
-    const productStockInput   = document.getElementById('productStock');
-    const modalTitle          = document.getElementById('productModalTitle');
+    const productIdInput       = document.getElementById('productId');
+    const productSkuInput      = document.getElementById('productSku');
+    const productNameInput     = document.getElementById('productName');
+    const productCategoryInput = document.getElementById('productCategory');
+    const productMrpInput      = document.getElementById('productMrp') || document.getElementById('productPrice');
+    const productPriceInput    = document.getElementById('productPrice');
+    const productGstInput      = document.getElementById('productGst');
+    const productStockInput    = document.getElementById('productStock');
+    const modalTitle           = document.getElementById('productModalTitle');
 
     let allProducts = [];
 
-    // =========================================
-    // 1. LOAD PRODUCTS FROM MYSQL
-    // =========================================
+    // ── 1. LOAD PRODUCTS ──────────────────────────────────────────────────────
     async function loadProducts() {
         try {
-            const res = await fetch(`${NODE_API}/products`);
+            const res = await apiFetch(`${NODE_API}/products`);
             if (!res.ok) throw new Error(`Server error ${res.status}`);
             allProducts = await res.json();
             filterAndRender();
@@ -43,15 +37,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 productsTableBody.innerHTML = `
                     <tr><td colspan="7" class="text-center text-danger py-4">
                         <i class="bi bi-exclamation-triangle display-6 d-block mb-2"></i>
-                        Could not load products. Make sure Node.js server is running.
+                        Could not load products. Make sure Node.js server is running and ngrok URL is up to date in <code>js/config.js</code>.
                     </td></tr>`;
             }
         }
     }
 
-    // =========================================
-    // 2. FILTER & RENDER TABLE
-    // =========================================
+    // ── 2. FILTER & RENDER TABLE ──────────────────────────────────────────────
     function filterAndRender() {
         if (!productsTableBody) return;
 
@@ -80,8 +72,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         filtered.forEach(p => {
             const stock = parseInt(p.stock_quantity || 0, 10);
             let stockBadge = '<span class="badge bg-success">In Stock</span>';
-            if (stock === 0)  stockBadge = '<span class="badge bg-danger">Out of Stock</span>';
-            else if (stock < 10) stockBadge = '<span class="badge bg-warning text-dark">Low Stock</span>';
+            if (stock === 0)       stockBadge = '<span class="badge bg-danger">Out of Stock</span>';
+            else if (stock < 10)   stockBadge = '<span class="badge bg-warning text-dark">Low Stock</span>';
 
             const row = document.createElement('tr');
             row.innerHTML = `
@@ -103,15 +95,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // =========================================
-    // 3. SEARCH & FILTER LISTENERS
-    // =========================================
+    // ── 3. SEARCH & FILTER LISTENERS ─────────────────────────────────────────
     if (searchInput)    searchInput.addEventListener('input', filterAndRender);
     if (categoryFilter) categoryFilter.addEventListener('change', filterAndRender);
 
-    // =========================================
-    // 4. ADD / EDIT PRODUCT → SAVE TO MYSQL
-    // =========================================
+    // ── 4. ADD / EDIT PRODUCT ─────────────────────────────────────────────────
     if (productForm) {
         productForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -121,33 +109,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             const sgstRate  = cgstRate;
 
             const productData = {
-                name:          productNameInput.value.trim(),
-                category:      productCategoryInput.value,
-                brand:         productSkuInput ? productSkuInput.value.trim() : '',
-                mrp:           parseFloat(productMrpInput ? productMrpInput.value : 0) || 0,
-                selling_price: parseFloat(productPriceInput.value) || 0,
-                stock_quantity:parseInt(productStockInput.value, 10) || 0,
-                cgst_rate:     cgstRate,
-                sgst_rate:     sgstRate
+                name:           productNameInput.value.trim(),
+                category:       productCategoryInput.value,
+                brand:          productSkuInput ? productSkuInput.value.trim() : '',
+                mrp:            parseFloat(productMrpInput ? productMrpInput.value : 0) || 0,
+                selling_price:  parseFloat(productPriceInput.value) || 0,
+                stock_quantity: parseInt(productStockInput.value, 10) || 0,
+                cgst_rate:      cgstRate,
+                sgst_rate:      sgstRate
             };
 
             try {
-                let res, url, method;
+                const url    = editingId ? `${NODE_API}/products/${editingId}` : `${NODE_API}/products`;
+                const method = editingId ? 'PUT' : 'POST';
 
-                if (editingId) {
-                    // UPDATE existing product
-                    url    = `${NODE_API}/products/${editingId}`;
-                    method = 'PUT';
-                } else {
-                    // ADD new product
-                    url    = `${NODE_API}/products`;
-                    method = 'POST';
-                }
-
-                res = await fetch(url, {
+                const res = await apiFetch(url, {
                     method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body:    JSON.stringify(productData)
+                    body: JSON.stringify(productData)
                 });
 
                 if (!res.ok) {
@@ -155,7 +133,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     throw new Error(errData.error || `Server error ${res.status}`);
                 }
 
-                // Close modal and reload
                 if (productModalEl) {
                     const modal = bootstrap.Modal.getInstance(productModalEl) || new bootstrap.Modal(productModalEl);
                     modal.hide();
@@ -173,10 +150,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // =========================================
-    // 5. OPEN EDIT MODAL
-    // =========================================
-    window.openEditModal = function(productId) {
+    // ── 5. OPEN EDIT MODAL ────────────────────────────────────────────────────
+    window.openEditModal = function (productId) {
         const p = allProducts.find(prod => prod.id === productId);
         if (!p) return;
 
@@ -203,16 +178,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // =========================================
-    // 6. DELETE PRODUCT
-    // =========================================
-    window.deleteProduct = async function(productId) {
+    // ── 6. DELETE PRODUCT ─────────────────────────────────────────────────────
+    window.deleteProduct = async function (productId) {
         const prod = allProducts.find(p => p.id === productId);
         if (!prod) return;
         if (!confirm(`Delete "${prod.name}"? This cannot be undone.`)) return;
 
         try {
-            const res = await fetch(`${NODE_API}/products/${productId}`, { method: 'DELETE' });
+            const res = await apiFetch(`${NODE_API}/products/${productId}`, { method: 'DELETE' });
             if (!res.ok) {
                 const errData = await res.json();
                 throw new Error(errData.error || `Server error ${res.status}`);
@@ -224,16 +197,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // =========================================
-    // 7. OPEN ADD MODAL FROM DASHBOARD LINK
-    // =========================================
+    // ── 7. OPEN ADD MODAL FROM DASHBOARD LINK ────────────────────────────────
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('openModal') === 'true' && productModalEl) {
         setTimeout(() => new bootstrap.Modal(productModalEl).show(), 300);
     }
 
-    // =========================================
-    // INITIAL LOAD
-    // =========================================
+    // ── INITIAL LOAD ──────────────────────────────────────────────────────────
     await loadProducts();
 });
