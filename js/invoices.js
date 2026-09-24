@@ -1,11 +1,10 @@
 // =========================================
-// invoices.js — reads API URL from config.js
+// invoices.js — uses config.js for API URL
+// NODE_API comes from config.js
 // =========================================
-const NODE_API = window.APP_CONFIG.NODE_API;
 
 document.addEventListener('DOMContentLoaded', async () => {
 
-    // ── DOM ELEMENTS ──────────────────────────────────────────────────────────
     const invoicesTableBody   = document.getElementById('invoicesTableBody');
     const searchInput         = document.getElementById('searchInvoiceInput');
     const filterPaymentMethod = document.getElementById('filterPaymentMethod');
@@ -25,7 +24,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     let allInvoices = [];
     let bsModal     = null;
 
-    // ── HELPERS ───────────────────────────────────────────────────────────────
     function fmt(val) {
         const n = parseFloat(val);
         return isNaN(n) ? '0.00' : n.toFixed(2);
@@ -40,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // ── 1. LOAD ALL INVOICES ──────────────────────────────────────────────────
+    // ── 1. LOAD INVOICES ──────────────────────────────────────────────────────
     async function loadInvoices() {
         showTableLoading();
         try {
@@ -54,7 +52,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // ── 2. FILTER + RENDER TABLE ──────────────────────────────────────────────
+    // ── 2. FILTER + RENDER ────────────────────────────────────────────────────
     function applyFiltersAndRender() {
         const query        = (searchInput?.value || '').toLowerCase().trim();
         const methodFilter = (filterPaymentMethod?.value || '').toLowerCase();
@@ -100,12 +98,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             </tr>`).join('');
     }
 
-    // ── 3. FILTER LISTENERS ───────────────────────────────────────────────────
+    // ── 3. SEARCH + FILTER LISTENERS ─────────────────────────────────────────
     searchInput?.addEventListener('input', applyFiltersAndRender);
     filterPaymentMethod?.addEventListener('change', applyFiltersAndRender);
 
     // ── 4. VIEW INVOICE MODAL ─────────────────────────────────────────────────
-    window.viewInvoiceModal = async function (saleId) {
+    window.viewInvoiceModal = async function(saleId) {
         setModalLoading(saleId);
         const modalEl = document.getElementById('invoiceDetailModal');
         if (!modalEl) return;
@@ -124,16 +122,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     function setModalLoading(saleId) {
-        if (modalInvoiceNo)     modalInvoiceNo.textContent     = `#INV-${saleId}`;
-        if (modalInvoiceDate)   modalInvoiceDate.textContent   = 'Loading…';
-        if (modalCustName)      modalCustName.textContent      = '—';
-        if (modalCustPhone)     modalCustPhone.textContent     = '—';
-        if (modalPaymentMethod) modalPaymentMethod.textContent = '—';
-        if (modalInvoiceItems)  modalInvoiceItems.innerHTML    = '<tr><td colspan="6" class="text-center text-muted py-3">Loading items…</td></tr>';
-        if (modalSubtotal)      modalSubtotal.textContent      = '₹—';
-        if (modalGST)           modalGST.textContent           = '₹—';
-        if (modalDiscount)      modalDiscount.textContent      = '₹—';
-        if (modalGrandTotal)    modalGrandTotal.textContent    = '₹—';
+        if (modalInvoiceNo)      modalInvoiceNo.textContent      = `#INV-${saleId}`;
+        if (modalInvoiceDate)    modalInvoiceDate.textContent    = 'Loading…';
+        if (modalCustName)       modalCustName.textContent       = '—';
+        if (modalCustPhone)      modalCustPhone.textContent      = '—';
+        if (modalPaymentMethod)  modalPaymentMethod.textContent  = '—';
+        if (modalInvoiceItems)   modalInvoiceItems.innerHTML     = '<tr><td colspan="6" class="text-center text-muted py-3">Loading items…</td></tr>';
+        if (modalSubtotal)       modalSubtotal.textContent       = '₹—';
+        if (modalGST)            modalGST.textContent            = '₹—';
+        if (modalDiscount)       modalDiscount.textContent       = '₹—';
+        if (modalGrandTotal)     modalGrandTotal.textContent     = '₹—';
     }
 
     function setModalError(msg) {
@@ -180,7 +178,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (modalGrandTotal) modalGrandTotal.textContent = `₹${fmt(inv.total_amount)}`;
     }
 
-    // ── 5. PRINT ──────────────────────────────────────────────────────────────
+    // ── 5. PRINT BUTTON ───────────────────────────────────────────────────────
     if (btnPrintInvoice) {
         btnPrintInvoice.addEventListener('click', () => window.print());
     }
@@ -202,11 +200,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <tr><td colspan="7" class="text-center text-danger py-4">
                     <i class="bi bi-exclamation-triangle display-6 d-block mb-2"></i>
                     Could not load invoices: ${msg}<br>
-                    <small class="text-muted">Make sure the Node.js server is running and ngrok URL is up to date in <code>js/config.js</code>.</small>
+                    <small class="text-muted">Make sure Node.js server is running and ngrok is active.</small>
                 </td></tr>`;
         }
     }
 
-    // ── INITIAL LOAD ──────────────────────────────────────────────────────────
     await loadInvoices();
 });
