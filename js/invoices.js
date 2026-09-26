@@ -19,6 +19,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const modalGST            = document.getElementById('modalGST');
     const modalDiscount       = document.getElementById('modalDiscount');
     const modalGrandTotal     = document.getElementById('modalGrandTotal');
+    const modalAmountReceived  = document.getElementById('modalAmountReceived');
+    const modalChangeAmount    = document.getElementById('modalChangeAmount');
+    const cashReceivedRow      = document.getElementById('cashReceivedRow');
+    const cashChangeRow        = document.getElementById('cashChangeRow');
     const btnPrintInvoice     = document.getElementById('btnPrintInvoice');
 
     let allInvoices = [];
@@ -132,6 +136,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (modalGST)            modalGST.textContent            = '₹—';
         if (modalDiscount)       modalDiscount.textContent       = '₹—';
         if (modalGrandTotal)     modalGrandTotal.textContent     = '₹—';
+        if (modalAmountReceived) modalAmountReceived.textContent = '—';
+        if (modalChangeAmount)   modalChangeAmount.textContent   = '—';
+        if (cashReceivedRow)     cashReceivedRow.style.display   = 'none';
+        if (cashChangeRow)       cashChangeRow.style.display     = 'none';
     }
 
     function setModalError(msg) {
@@ -176,6 +184,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (modalGST)        modalGST.textContent        = `₹${fmt(totalGst)}`;
         if (modalDiscount)   modalDiscount.textContent   = `₹${fmt(inv.discount)}`;
         if (modalGrandTotal) modalGrandTotal.textContent = `₹${fmt(inv.total_amount)}`;
+
+        const isCash = String(inv.payment_method || '').toUpperCase() === 'CASH';
+        if (cashReceivedRow) cashReceivedRow.style.display = isCash ? '' : 'none';
+        if (cashChangeRow) cashChangeRow.style.display = isCash ? '' : 'none';
+        if (modalAmountReceived) {
+            modalAmountReceived.textContent = isCash && inv.amount_received != null
+                ? `₹${fmt(inv.amount_received)}` : '—';
+        }
+        if (modalChangeAmount) {
+            modalChangeAmount.textContent = isCash && inv.change_amount != null
+                ? `₹${fmt(inv.change_amount)}` : '—';
+        }
     }
 
     // ── 5. PRINT BUTTON ───────────────────────────────────────────────────────
