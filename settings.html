@@ -24,19 +24,34 @@
                 <span>MyShop Manager</span>
             </a>
         </div>
-        <div class="d-flex align-items-center gap-3">
-            <input type="text" class="form-control search-input" placeholder="Search...">
-            <div class="dropdown">
-                <button class="btn btn-sm text-white dropdown-toggle d-flex align-items-center gap-1" type="button" data-bs-toggle="dropdown">
-                    <i class="bi bi-person-circle fs-5"></i>
-                    <span class="d-none d-md-inline">Admin</span>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-menu-item dropdown-item" href="Settings.html">Settings</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-menu-item dropdown-item text-danger" href="login.html">Logout</a></li>
-                </ul>
+
+        <div class="header-shop-profile" id="headerShopProfile">
+
+            <!-- Admin name appears LEFT of shop logo -->
+            <span class="header-admin-name" id="headerAdminName">
+                Admin
+            </span>
+
+            <!-- Shop logo stays at the RIGHT -->
+            <div class="header-shop-logo-wrap"
+                id="headerShopLogoWrap"
+                title="Shop Logo">
+
+                <img
+                    id="headerShopLogo"
+                    class="header-shop-logo"
+                    src=""
+                    alt="Shop Logo"
+                >
+
+                <!-- Shown only when no logo has been saved -->
+                <i
+                    id="headerShopLogoFallback"
+                    class="bi bi-shop header-shop-logo-fallback">
+                </i>
+
             </div>
+
         </div>
     </header>
 
@@ -71,7 +86,7 @@
                     <i class="bi bi-person-badge text-info me-1"></i>
                     <span>ID: <strong class="text-light">USR-001</strong></span>
                 </div>
-                <a href="login.html" class="btn btn-sm btn-outline-danger" title="Sign Out">
+                <a href="index.html" class="btn btn-sm btn-outline-danger" title="Sign Out">
                     <i class="bi bi-box-arrow-right"></i>
                 </a>
             </div>
@@ -117,20 +132,42 @@
                                     <input type="text" class="form-control" id="shopGst" placeholder="27AAAAA0000A1Z5">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="shopLogoInput" class="form-label">Shop Logo</label>
-                                    <input 
-                                        class="form-control" 
-                                        type="file" 
-                                        id="shopLogoInput" 
-                                        accept="image/*"
-                                        onchange="previewShopLogo(event)"
-                                    >
-                                    
-                                    <!-- Clean Preview Container -->
-                                    <div class="logo-preview-box mt-2">
-                                        <img id="logoPreview" src="" alt="Preview" style="display: none;">
-                                        <span id="logoPlaceholderText" class="text-muted small">No Logo</span>
+
+                                    <label
+                                        for="shopLogoInput"
+                                        class="form-label fw-semibold">
+                                        Shop Logo
+                                    </label>
+
+                                    <input
+                                        class="form-control"
+                                        type="file"
+                                        id="shopLogoInput"
+                                        accept="image/png,image/jpeg,image/webp">
+
+                                    <!-- Shows selected/saved filename -->
+                                    <div
+                                        id="shopLogoFileStatus"
+                                        class="small text-muted mt-1">
+                                        No logo selected
                                     </div>
+
+                                    <div class="logo-preview-box mt-2">
+
+                                        <img
+                                            id="logoPreview"
+                                            src=""
+                                            alt="Shop Logo Preview"
+                                            style="display:none;">
+
+                                        <span
+                                            id="logoPlaceholderText"
+                                            class="text-muted small">
+                                            No Logo
+                                        </span>
+
+                                    </div>
+
                                 </div>
                             </div>
                         </div>
@@ -151,10 +188,58 @@
                                         <input type="text" class="form-control" id="upiId" placeholder="yourshop@upi">
                                         <label class="form-label fw-semibold mt-3">Business Name</label>
                                         <input type="text" class="form-control" id="upiName" placeholder="Business Name">
-                                        <label class="form-label fw-semibold mt-3">UPI QR Code</label>
-                                        <input type="file" class="form-control" id="upiQrInput" accept="image/*">
-                                        <img id="upiQrPreview" style="display:none;max-width:180px;" alt="UPI QR Code Preview">
                                     </div>
+
+                                    <div class="mb-3">
+
+                                        <label
+                                            for="upiQrInput"
+                                            class="form-label fw-semibold">
+
+                                            UPI QR Code
+
+                                        </label>
+
+                                        <input
+                                            type="file"
+                                            class="form-control"
+                                            id="upiQrInput"
+                                            accept="image/png,image/jpeg,image/webp">
+
+                                        <!-- Selected/saved status -->
+                                        <div
+                                            id="upiQrFileStatus"
+                                            class="small text-muted mt-1">
+
+                                            No QR image selected
+
+                                        </div>
+
+                                        <div class="mt-2">
+
+                                            <img
+                                                id="upiQrPreview"
+                                                src=""
+                                                alt="UPI QR Code Preview"
+                                                style="
+                                                    display:none;
+                                                    width:180px;
+                                                    height:180px;
+                                                    object-fit:contain;
+                                                    border:1px solid rgba(128,128,128,.35);
+                                                    border-radius:8px;
+                                                    padding:6px;
+                                                    background:#fff;
+                                                ">
+
+                                        </div>
+
+                                        <small class="text-muted d-block mt-1">
+                                            PNG, JPG, JPEG or WEBP; maximum 5 MB.
+                                        </small>
+
+                                    </div>
+
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label fw-semibold">Currency Symbol</label>
                                         <select class="form-select" id="currencySymbol">
@@ -253,8 +338,8 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="./js/app.js"></script>
-    <script src="./js/config.js"></script>
-    <script src="./js/settings.js"></script>
+    <script src="../Html/js/app.js"></script>
+    <script src="../Html/js/config.js"></script>
+    <script src="../Html/js/settings.js"></script>
 </body>
 </html>
