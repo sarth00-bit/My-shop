@@ -168,68 +168,51 @@
 
     </div>
 
-    <!-- 📜 Recent Transactions Row -->
-    <div class="row g-3 mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white fw-bold d-flex align-items-center justify-content-between py-3">
-                    <span><i class="bi bi-clock-history me-2 text-primary"></i>Recent Transactions</span>
-                    <a href="invoices.html" class="btn btn-sm btn-outline-primary">View All Invoices</a>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th scope="col">Invoice ID</th>
-                                <th scope="col">Customer</th>
-                                <th scope="col">Date</th>
-                                <th scope="col">Amount</th>
-                                <th scope="col">Status</th>
-                                <th scope="col" class="text-end">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="recentTransactionsBody">
-                            <tr>
-                                <td class="fw-semibold">#INV-1001</td>
-                                <td>Rahul Sharma</td>
-                                <td>Sep 01, 2026</td>
-                                <td>₹2,499.00</td>
-                                <td><span class="badge bg-success-subtle text-success border border-success-subtle">Paid</span></td>
-                                <td class="text-end">
-                                    <a href="invoices.html?id=1001" class="btn btn-sm btn-light border" title="View Details">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="fw-semibold">#INV-1002</td>
-                                <td>Priya Patel</td>
-                                <td>Sep 01, 2026</td>
-                                <td>₹1,250.00</td>
-                                <td><span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Pending</span></td>
-                                <td class="text-end">
-                                    <a href="invoices.html?id=1002" class="btn btn-sm btn-light border" title="View Details">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="fw-semibold">#INV-1003</td>
-                                <td>Amit Verma</td>
-                                <td>Aug 31, 2026</td>
-                                <td>₹4,800.00</td>
-                                <td><span class="badge bg-success-subtle text-success border border-success-subtle">Paid</span></td>
-                                <td class="text-end">
-                                    <a href="invoices.html?id=1003" class="btn btn-sm btn-light border" title="View Details">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+   <!-- 📜 Recent Transactions -->
+    <div class="dashboard-recent-transactions mb-4">
+
+        <div class="card border-0 shadow-sm">
+
+            <div class="card-header bg-white fw-bold d-flex align-items-center justify-content-between py-3">
+                <span>
+                    <i class="bi bi-clock-history me-2 text-primary"></i>
+                    Recent Transactions
+                </span>
+
+                <a href="invoices.html"
+                class="btn btn-sm btn-outline-primary">
+                    View All Invoices
+                </a>
             </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th>Invoice ID</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="recentTransactionsBody">
+                        <tr>
+                            <td colspan="6"
+                                class="text-center text-muted py-3">
+                                Loading transactions...
+                            </td>
+                        </tr>
+                    </tbody>
+
+                </table>
+            </div>
+
         </div>
+
     </div>
 
    <!-- BOTTOM KPI ROW -->
