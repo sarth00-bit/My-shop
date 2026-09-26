@@ -44,7 +44,7 @@ body {
     height: 58px;
     margin: 0 auto 16px;
     border-radius: 14px;
-    background: #2563eb;
+    background: #0A4D68;
     color: white;
     display: flex;
     align-items: center;
@@ -103,7 +103,7 @@ body {
 }
 
 .input-wrapper input:focus {
-    border-color: #2563eb;
+    border-color: #0A4D68;
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
@@ -169,7 +169,7 @@ body {
 .remember-me input {
     width: 15px;
     height: 15px;
-    accent-color: #2563eb;
+    accent-color: #188542;
 }
 
 .forgot-password {
@@ -188,7 +188,7 @@ body {
     height: 48px;
     border: none;
     border-radius: 9px;
-    background: #2563eb;
+    background: #0A4D68;
     color: white;
     font-size: 15px;
     font-weight: 600;
@@ -197,7 +197,7 @@ body {
 }
 
 .login-button:hover {
-    background: #1d4ed8;
+    background: #188542;
 }
 
 .login-button:disabled {
