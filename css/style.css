@@ -1005,3 +1005,47 @@ nav.navbar.fixed-top .navbar-brand {
         white-space: nowrap !important;
     }
 }
+
+/* =========================================================
+   DASHBOARD - RECENT TRANSACTIONS ONLY
+   ========================================================= */
+
+.dashboard-recent-transactions {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    overflow: hidden;
+}
+
+.dashboard-recent-transactions > .card {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+
+.dashboard-recent-transactions .table-responsive {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.dashboard-recent-transactions table {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+}
+
+.dashboard-recent-transactions th,
+.dashboard-recent-transactions td {
+    white-space: nowrap;
+}
+
+/* Keep action column compact */
+.dashboard-recent-transactions th:last-child,
+.dashboard-recent-transactions td:last-child {
+    width: 80px;
+    text-align: right;
+}
