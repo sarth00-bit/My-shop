@@ -1,0 +1,610 @@
+/* ==========================================================================
+   responsive.css — MyShop Manager
+   Mobile-first responsive overrides for all pages.
+   Add this AFTER style.css in every HTML page:
+     <link rel="stylesheet" href="./css/responsive.css">
+   ========================================================================== */
+
+
+/* ==========================================================================
+   1. ROOT BREAKPOINT TOKENS
+   ========================================================================== */
+:root {
+    --sidebar-width: 250px;
+    --sidebar-collapsed-width: 0px;
+    --navbar-height: 56px;
+}
+
+
+/* ==========================================================================
+   2. SIDEBAR — MOBILE OVERLAY BEHAVIOUR
+   On screens ≤ 991px the sidebar slides in as a full-height overlay
+   so it never squashes the main content column.
+   ========================================================================== */
+@media (max-width: 991.98px) {
+
+    /* Default state: sidebar hidden off-screen to the left */
+    #sidebarMenu,
+    #sidebar,
+    .sidebar {
+        position: fixed !important;
+        top: var(--navbar-height) !important;
+        left: 0 !important;
+        height: calc(100vh - var(--navbar-height)) !important;
+        width: 260px !important;
+        min-width: 260px !important;
+        z-index: 1050 !important;
+        transform: translateX(-100%) !important;
+        transition: transform 0.25s ease !important;
+        overflow-y: auto !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+
+    /* Visible state: toggled via JS adding .sidebar-open to <body> */
+    body.sidebar-open #sidebarMenu,
+    body.sidebar-open #sidebar,
+    body.sidebar-open .sidebar {
+        transform: translateX(0) !important;
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.35) !important;
+    }
+
+    /* Semi-transparent backdrop behind the open sidebar */
+    body.sidebar-open::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        z-index: 1045;
+        animation: fadeInBackdrop 0.2s ease forwards;
+    }
+
+    @keyframes fadeInBackdrop {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+    }
+
+    /* Main content always uses full width on mobile */
+    #wrapper {
+        flex-direction: column !important;
+    }
+
+    #wrapper > main,
+    #wrapper > .main-content,
+    .report-main-content {
+        width: 100% !important;
+        min-width: 0 !important;
+        padding: 1rem !important;
+    }
+
+    /* Cancel the desktop collapsed-sidebar rules on mobile */
+    body.sidebar-collapsed #sidebarMenu,
+    body.sidebar-collapsed #sidebar,
+    body.sidebar-collapsed .sidebar {
+        width: 260px !important;
+        min-width: 260px !important;
+        transform: translateX(-100%) !important;
+        opacity: 1 !important;
+        padding: initial !important;
+        overflow: hidden auto !important;
+    }
+
+    body.sidebar-collapsed #sidebarMenu > *,
+    body.sidebar-collapsed #sidebar > *,
+    body.sidebar-collapsed .sidebar > * {
+        display: flex !important;
+    }
+}
+
+
+/* ==========================================================================
+   3. TOP NAVBAR
+   ========================================================================== */
+@media (max-width: 575.98px) {
+
+    nav.navbar.fixed-top,
+    .top-navbar {
+        padding: 0 0.6rem !important;
+    }
+
+    nav.navbar.fixed-top .navbar-brand {
+        font-size: 1rem !important;
+    }
+
+    .header-admin-name {
+        display: none !important;  /* hide name on very small screens */
+    }
+
+    .header-shop-logo-wrap {
+        width: 34px !important;
+        height: 34px !important;
+        min-width: 34px !important;
+    }
+}
+
+@media (min-width: 576px) and (max-width: 991.98px) {
+
+    .header-admin-name {
+        max-width: 130px !important;
+        font-size: 13px !important;
+    }
+}
+
+
+/* ==========================================================================
+   4. DASHBOARD PAGE
+   ========================================================================== */
+
+/* KPI cards: 1 per row on phones, 2 on small tablets, 3 on ≥ md */
+@media (max-width: 575.98px) {
+
+    .card-kpi {
+        margin-bottom: 0.75rem;
+    }
+
+    .card-kpi .kpi-value {
+        font-size: 1.4rem !important;
+    }
+
+    .card-kpi .kpi-icon {
+        font-size: 1.8rem !important;
+    }
+
+    /* Charts stack vertically */
+    .col-md-7,
+    .col-md-5 {
+        width: 100% !important;
+    }
+
+    /* Recent transactions table: allow horizontal scroll */
+    .dashboard-recent-transactions .table-responsive {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Page heading */
+    h2.fw-bold {
+        font-size: 1.15rem !important;
+    }
+
+    /* Refresh badge area wraps cleanly */
+    .d-flex.align-items-center.justify-content-between.mb-4 {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.5rem !important;
+    }
+}
+
+@media (min-width: 576px) and (max-width: 767.98px) {
+
+    /* 2-column KPI grid on small tablets */
+    .row.g-3 > [class*="col-md-4"] {
+        width: 50% !important;
+    }
+}
+
+/* Chart canvas height: shorter on mobile so it doesn't eat the screen */
+@media (max-width: 767.98px) {
+
+    .card-body[style*="height: 280px"] {
+        height: 220px !important;
+    }
+}
+
+
+/* ==========================================================================
+   5. BILLING PAGE
+   ========================================================================== */
+@media (max-width: 991.98px) {
+
+    /* Product grid and cart stack vertically */
+    .billing-left,
+    .billing-right,
+    [class*="col-lg-8"],
+    [class*="col-lg-4"] {
+        width: 100% !important;
+    }
+
+    /* Category pills: horizontal scroll row */
+    .category-pills-row,
+    .d-flex.flex-wrap.gap-2 {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+    }
+
+    .category-pills-row::-webkit-scrollbar,
+    .d-flex.flex-wrap.gap-2::-webkit-scrollbar {
+        display: none;
+    }
+
+    .category-pill {
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Product cards: 2 per row on tablet */
+    .col-sm-6.col-md-4.col-xl-3 {
+        width: 50% !important;
+    }
+}
+
+@media (max-width: 575.98px) {
+
+    /* Product cards: 1 per row on phone */
+    .col-sm-6.col-md-4.col-xl-3 {
+        width: 100% !important;
+    }
+
+    /* Cart table horizontal scroll */
+    #cartTableBody,
+    .cart-table-wrapper {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Payment overlay: full-screen on mobile */
+    #paymentOverlay,
+    .payment-overlay {
+        padding: 1rem !important;
+    }
+}
+
+
+/* ==========================================================================
+   6. PRODUCTS PAGE
+   ========================================================================== */
+@media (max-width: 767.98px) {
+
+    /* Products table: horizontal scroll */
+    .table-responsive {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Action buttons in table: icon-only on tight screens */
+    .btn.btn-sm.btn-outline-primary,
+    .btn.btn-sm.btn-outline-danger {
+        padding: 0.25rem 0.4rem !important;
+    }
+
+    /* Search + filter row: stack vertically */
+    .row.g-3 > .col-md-6 {
+        width: 100% !important;
+    }
+
+    /* Modal: full-width on small screens */
+    .modal-dialog {
+        margin: 0.5rem !important;
+        max-width: calc(100vw - 1rem) !important;
+    }
+
+    .modal-dialog.modal-lg {
+        max-width: calc(100vw - 1rem) !important;
+    }
+}
+
+
+/* ==========================================================================
+   7. INVOICES PAGE
+   ========================================================================== */
+@media (max-width: 767.98px) {
+
+    /* Hide less-critical columns on phones */
+    .table thead tr th:nth-child(4),  /* Contact */
+    .table tbody tr td:nth-child(4) {
+        display: none !important;
+    }
+
+    /* Invoice detail modal full-screen */
+    #invoiceDetailModal .modal-dialog {
+        margin: 0.4rem !important;
+        max-width: calc(100vw - 0.8rem) !important;
+    }
+
+    /* Print button */
+    #btnPrintInvoice {
+        width: 100% !important;
+        margin-top: 0.5rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+
+    /* Also hide Date column on very small phones */
+    .table thead tr th:nth-child(2),
+    .table tbody tr td:nth-child(2) {
+        display: none !important;
+    }
+
+    /* Truncate customer names */
+    .table td.fw-semibold {
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+
+/* ==========================================================================
+   8. REPORT PAGE
+   ========================================================================== */
+@media (max-width: 991.98px) {
+
+    /* Report KPI cards: 2 per row */
+    .row.g-3 > [class*="col-md-3"] {
+        width: 50% !important;
+    }
+
+    /* Report tabs: scrollable horizontal row */
+    .report-tabs,
+    .nav.nav-tabs {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .report-tabs::-webkit-scrollbar,
+    .nav.nav-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .report-tabs .nav-link,
+    .nav.nav-tabs .nav-link {
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Filter row: stack */
+    .row.g-2 > [class*="col-md"] {
+        width: 100% !important;
+    }
+
+    /* Export buttons: full-width row */
+    .btn-group,
+    .d-flex.gap-2 {
+        flex-wrap: wrap !important;
+    }
+
+    .btn-group .btn {
+        flex: 1 1 auto;
+    }
+}
+
+@media (max-width: 575.98px) {
+
+    /* Report KPI: 1 per row */
+    .row.g-3 > [class*="col-md-3"] {
+        width: 100% !important;
+    }
+
+    /* Charts in report: full width */
+    .col-md-6,
+    .col-md-8,
+    .col-md-4 {
+        width: 100% !important;
+    }
+}
+
+
+/* ==========================================================================
+   9. SETTINGS PAGE
+   ========================================================================== */
+@media (max-width: 767.98px) {
+
+    /* Settings card columns: full width */
+    .col-md-6,
+    .col-lg-4,
+    .col-lg-8 {
+        width: 100% !important;
+    }
+
+    /* Logo preview box */
+    .logo-preview-box {
+        width: 100% !important;
+        height: 100px !important;
+    }
+}
+
+
+/* ==========================================================================
+   10. INDEX / LANDING PAGE
+   ========================================================================== */
+@media (max-width: 767.98px) {
+
+    .hero {
+        padding: 50px 5% !important;
+        gap: 40px !important;
+    }
+
+    .preview-card {
+        width: 100% !important;
+    }
+
+    .stats {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+}
+
+@media (max-width: 575.98px) {
+
+    .hero h1 {
+        font-size: 2.2rem !important;
+        letter-spacing: -1px !important;
+    }
+
+    .stats {
+        grid-template-columns: 1fr !important;
+    }
+
+    .feature-grid {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}
+
+
+/* ==========================================================================
+   11. LOGIN & SIGNUP PAGES
+   ========================================================================== */
+@media (max-width: 480px) {
+
+    .login-card,
+    .signup-card {
+        padding: 24px 16px !important;
+        border-radius: 12px !important;
+        margin: 0.5rem !important;
+    }
+
+    .login-header h1,
+    .signup-header h1 {
+        font-size: 1.4rem !important;
+    }
+
+    .input-wrapper input,
+    .form-group input {
+        height: 44px !important;
+        font-size: 13px !important;
+    }
+
+    .login-button,
+    .signup-button {
+        height: 44px !important;
+        font-size: 14px !important;
+    }
+}
+
+
+/* ==========================================================================
+   12. GLOBAL TABLE IMPROVEMENTS FOR TOUCH
+   ========================================================================== */
+@media (max-width: 767.98px) {
+
+    .table-responsive {
+        border-radius: 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Slightly more padding for touch targets */
+    .table td,
+    .table th {
+        padding: 0.6rem 0.75rem !important;
+    }
+
+    .btn-sm {
+        padding: 0.3rem 0.55rem !important;
+        font-size: 0.8rem !important;
+    }
+}
+
+
+/* ==========================================================================
+   13. MODAL IMPROVEMENTS FOR MOBILE
+   ========================================================================== */
+@media (max-width: 575.98px) {
+
+    .modal-dialog {
+        margin: 0.5rem !important;
+        max-width: calc(100vw - 1rem) !important;
+    }
+
+    .modal-footer {
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+    }
+
+    .modal-footer .btn {
+        width: 100% !important;
+    }
+}
+
+
+/* ==========================================================================
+   14. FORM CONTROLS — LARGER TOUCH TARGETS
+   ========================================================================== */
+@media (max-width: 767.98px) {
+
+    .form-control,
+    .form-select,
+    .input-group .form-control {
+        font-size: 16px !important; /* prevents iOS zoom on focus */
+        min-height: 44px !important;
+    }
+
+    .form-label {
+        font-size: 0.875rem !important;
+    }
+
+    /* Full-width buttons in filter bars */
+    .card-body .btn {
+        min-height: 40px;
+    }
+}
+
+
+/* ==========================================================================
+   15. BADGE & CHIP WRAPPING
+   ========================================================================== */
+@media (max-width: 575.98px) {
+
+    .badge {
+        font-size: 0.7rem !important;
+        padding: 0.25em 0.5em !important;
+    }
+}
+
+
+/* ==========================================================================
+   16. DARK MODE — MOBILE BACKDROP FIX
+   ========================================================================== */
+body.dark-mode.sidebar-open::before,
+[data-bs-theme="dark"] body.sidebar-open::before {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+
+/* ==========================================================================
+   17. PRINT — keep unchanged (already in style.css, listed for safety)
+   ========================================================================== */
+@media print {
+
+    #sidebarMenu,
+    #sidebar,
+    .sidebar,
+    nav.navbar.fixed-top {
+        display: none !important;
+    }
+
+    body {
+        padding-top: 0 !important;
+    }
+
+    #wrapper > main {
+        width: 100% !important;
+        padding: 0 !important;
+    }
+}
+
+
+/* ==========================================================================
+   18. UTILITY: SAFE MINIMUM TAP TARGET (44 × 44 px)
+   ========================================================================== */
+@media (max-width: 991.98px) {
+
+    .nav-link,
+    .btn,
+    a.btn,
+    button {
+        min-height: 40px;
+    }
+
+    /* Sidebar nav links need generous tap areas */
+    #sidebarMenu .nav-link,
+    #sidebar .nav-link {
+        padding: 0.85rem 1rem !important;
+    }
+}
