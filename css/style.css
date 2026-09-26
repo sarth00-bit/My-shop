@@ -4,12 +4,12 @@
 :root {
     /* Primary Colors */
     --bs-primary-rgb: 13, 110, 253;
-    --navbar-bg: #0d6efd;
+    --navbar-bg: #0A4D68;
     --navbar-color: #ffffff;
     
     /* Light Theme Defaults */
-    --bg-main: #f8f9fa;
-    --bg-card: #ffffff;
+    --bg-main: #f0f0f0;
+    --bg-card: #fbfbfb;
     --text-primary: #212529;
     --text-secondary: #6c757d;
     --border-color: #dee2e6;
@@ -34,7 +34,7 @@ body.dark-mode,
     --text-primary: #e9ecef;
     --text-secondary: #adb5bd;
     --border-color: #333333;
-    --navbar-bg: #0b5ed7;
+    --navbar-bg: #0A4D68;
     --sidebar-bg: #181b1e;
     --table-header-bg: #2b3035;
     --table-hover-bg: rgba(255, 255, 255, 0.05);
@@ -327,7 +327,7 @@ body.sidebar-collapsed .sidebar .nav-link i,
 .report-tabs .nav-link.active {
     color: #fd0db5 !important;
     background-color: var(--bg-card) !important;
-    border-color: var(--border-color) var(--border-color) var(--bg-card) !important;
+    border-color: #fd0db5 !important;
     border-bottom: 3px solid #f90dfd !important;
 }
 
@@ -501,7 +501,7 @@ main,
 .kpi-card:nth-child(1),
 .card.kpi:nth-child(1),
 .kpi-primary {
-    background: linear-gradient(135deg, #0d6efd, #0a58ca) !important;
+    background: linear-gradient(135deg, #fd1d0d, #a11404) !important;
 }
 
 .kpi-card:nth-child(2),
@@ -519,7 +519,7 @@ main,
 .kpi-card:nth-child(4),
 .card.kpi:nth-child(4),
 .kpi-info {
-    background: linear-gradient(135deg, #0dcaf0, #0aa2c0) !important;
+    background: linear-gradient(135deg, #039203, #067e16) !important;
 }
 
 /* Ensure text and sub-labels remain high contrast and visible */
@@ -610,7 +610,7 @@ img[src=""], img:not([src]) {
 
 /* 1. Today's Sales (Bright Blue) */
 .kpi-blue {
-    background-color: #0d6efd !important;
+    background-color: #E59934 !important;
 }
 
 /* 2. Today's Profit (Forest Green) */
@@ -620,7 +620,7 @@ img[src=""], img:not([src]) {
 
 /* 3. Monthly Sales (Cyan / Turquoise) */
 .kpi-cyan {
-    background-color: #0dcaf0 !important;
+    background-color: #722F99 !important;
 }
 
 /* 4. Today's Bills (Dark Charcoal) */
@@ -639,9 +639,9 @@ img[src=""], img:not([src]) {
 }
 
 /* --- Dark Mode Background Overrides --- */
-body.dark-mode .kpi-blue, [data-bs-theme="dark"] .kpi-blue { background-color: #0d6efd !important; }
+body.dark-mode .kpi-blue, [data-bs-theme="dark"] .kpi-blue { background-color: #E59934 !important; }
 body.dark-mode .kpi-green, [data-bs-theme="dark"] .kpi-green { background-color: #198754 !important; }
-body.dark-mode .kpi-cyan, [data-bs-theme="dark"] .kpi-cyan { background-color: #0dcaf0 !important; }
+body.dark-mode .kpi-cyan, [data-bs-theme="dark"] .kpi-cyan { background-color: #722F99 !important; }
 body.dark-mode .kpi-dark, [data-bs-theme="dark"] .kpi-dark { background-color: #2b3035 !important; }
 body.dark-mode .kpi-grey, [data-bs-theme="dark"] .kpi-grey { background-color: #6c757d !important; }
 body.dark-mode .kpi-red, [data-bs-theme="dark"] .kpi-red { background-color: #dc3545 !important; }
@@ -695,7 +695,7 @@ main, .main-content {
 div[class*="col"]:nth-child(1) .card.kpi,
 div[class*="col"]:nth-child(1) .kpi,
 .card.kpi:nth-child(1) {
-    background-color: #0d6efd !important;
+    background-color: #0B1849 !important;
 }
 
 div[class*="col"]:nth-child(1) .card.kpi *,
@@ -773,8 +773,8 @@ div[class*="col"]:nth-child(4) .card.kpi small {
 /* 1. SALES REVENUE (Vibrant Blue) */
 body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(1) .card,
 body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(1) [class*="card"] {
-    background-color: #0d6efd !important;
-    background: #0d6efd !important;
+    background-color: #722F99 !important;
+    background: #722F99 !important;
     color: #ffffff !important;
 }
 body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(1) .card * {
@@ -816,4 +816,192 @@ body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(4) [c
 }
 body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(4) .card * {
     color: #ffffff !important;
+}
+
+/* ==========================================================================
+   FINAL SIDEBAR TOGGLE FIX
+   The hamburger button now completely hides the sidebar instead of leaving
+   the navigation text/icons visible in a narrow 70px strip.
+   ========================================================================== */
+
+/* Hidden state: remove the sidebar from the flex layout completely. */
+body.sidebar-collapsed #sidebarMenu,
+body.sidebar-collapsed #sidebar,
+body.sidebar-collapsed .sidebar {
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    flex: 0 0 0 !important;
+    padding: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    border: 0 !important;
+    overflow: hidden !important;
+    opacity: 0;
+}
+
+/* Hide every sidebar child so text cannot spill into the main content. */
+body.sidebar-collapsed #sidebarMenu > *,
+body.sidebar-collapsed #sidebar > *,
+body.sidebar-collapsed .sidebar > * {
+    display: none !important;
+}
+
+/* Main content automatically uses the complete available width. */
+body.sidebar-collapsed #wrapper {
+    width: 100% !important;
+}
+
+body.sidebar-collapsed #wrapper > main,
+body.sidebar-collapsed #wrapper > .main-content,
+body.sidebar-collapsed .main-content,
+body.sidebar-collapsed .report-main-content {
+    width: 100% !important;
+    max-width: none !important;
+    flex: 1 1 100% !important;
+    min-width: 0 !important;
+}
+
+/* Smooth transition for the sidebar and page content. */
+#sidebarMenu,
+#sidebar,
+.sidebar {
+    transition:
+        width 0.25s ease,
+        min-width 0.25s ease,
+        max-width 0.25s ease,
+        flex-basis 0.25s ease,
+        opacity 0.2s ease,
+        padding 0.25s ease,
+        margin 0.25s ease !important;
+}
+
+/* Keep the hamburger above the page content. */
+#sidebarToggle,
+#btnToggleSidebar {
+    position: relative;
+    z-index: 2000;
+}
+
+/* ============================================================
+   SHOP LOGO + ADMIN NAME IN TOP NAVBAR
+   ============================================================ */
+
+.header-shop-profile {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    min-width: 0;
+    margin-left: auto;
+    padding-left: 12px;
+}
+
+.header-admin-name {
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.header-shop-logo-wrap {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 8px;
+    overflow: hidden;
+
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.35);
+}
+
+.header-shop-logo {
+    width: 100%;
+    height: 100%;
+
+    display: none;
+
+    object-fit: contain;
+    background: #ffffff;
+}
+
+.header-shop-logo-fallback {
+    color: #ffffff;
+    font-size: 21px;
+}
+
+@media (max-width: 576px) {
+
+    .header-admin-name {
+        max-width: 120px;
+        font-size: 13px;
+    }
+
+    .header-shop-logo-wrap {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+    }
+}
+
+/* ============================================================
+   FIX: KEEP "MyShop Manager" ON THE LEFT
+   ============================================================ */
+
+nav.navbar.fixed-top > .container-fluid {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    flex-wrap: nowrap !important;
+}
+
+/* Hamburger stays at the far left */
+nav.navbar.fixed-top > .container-fluid > #sidebarToggle {
+    flex: 0 0 auto !important;
+    margin-left: 0 !important;
+    margin-right: 0.5rem !important;
+}
+
+/* MyShop Manager stays immediately after hamburger */
+nav.navbar.fixed-top > .container-fluid > .navbar-brand {
+    position: static !important;
+    order: 0 !important;
+    margin-left: 0 !important;
+    margin-right: auto !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    float: none !important;
+    transform: none !important;
+}
+
+/* Right-side profile stays on the right */
+nav.navbar.fixed-top > .container-fluid > .header-shop-profile,
+nav.navbar.fixed-top > .container-fluid > .ms-auto {
+    flex: 0 0 auto !important;
+    margin-left: auto !important;
+}
+
+/* Prevent other rules from moving the brand */
+nav.navbar.fixed-top .navbar-brand {
+    left: auto !important;
+    right: auto !important;
+    inset-inline-start: auto !important;
+    inset-inline-end: auto !important;
+}
+
+/* Mobile */
+@media (max-width: 576px) {
+    nav.navbar.fixed-top > .container-fluid > .navbar-brand {
+        margin-left: 0 !important;
+        margin-right: auto !important;
+        white-space: nowrap !important;
+    }
 }
