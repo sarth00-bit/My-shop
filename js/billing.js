@@ -18,7 +18,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         grandTotal: 0,
         subtotal:   0,
         totalGST:   0,
-        discount:   0
+        discount:        0,
+        amountReceived:  0,
+        changeAmount:    0
     };
 
     // ── DOM ───────────────────────────────────────────────────────────────────
@@ -161,10 +163,46 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderCart();
     };
 
+    // Reset the current bill completely. This is used by both Clear Cart and
+    // Start New Bill so no items/payment/customer data can leak into the next bill.
+    function resetCurrentBill() {
+        cart = [];
+
+        const custName = document.getElementById('custName');
+        const custPhone = document.getElementById('custPhone');
+        if (custName) custName.value = '';
+        if (custPhone) custPhone.value = '';
+
+        if (discountInput) discountInput.value = '0';
+
+        payState.method = 'Cash';
+        payState.upiStatus = null;
+        payState.cardStatus = null;
+        payState.grandTotal = 0;
+        payState.subtotal = 0;
+        payState.totalGST = 0;
+        payState.discount = 0;
+        payState.amountReceived = 0;
+        payState.changeAmount = 0;
+
+        const cash = document.getElementById('cashTendered');
+        if (cash) cash.value = '';
+        const change = document.getElementById('cashChange');
+        if (change) change.textContent = formatINR(0);
+
+        renderCart();
+    }
+
     if (btnClearCart) {
         btnClearCart.addEventListener('click', () => {
-            if (!cart.length) return;
-            if (confirm('Clear the cart?')) { cart = []; renderCart(); }
+            if (!cart.length) {
+                // Re-render even when the state is already empty.
+                resetCurrentBill();
+                return;
+            }
+            if (confirm('Clear the cart?')) {
+                resetCurrentBill();
+            }
         });
     }
 
@@ -238,8 +276,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!paymentOverlay) return;
         resetOverlayScreens();
         // Update total display in overlay
-        const overlayTotal = document.getElementById('overlayGrandTotal');
-        if (overlayTotal) overlayTotal.textContent = `₹${payState.grandTotal.toFixed(2)}`;
+        const overlayTotal = document.getElementById('payAmountDisplay');
+        const cardAmountHint = document.getElementById('cardAmountHint');
+        if (overlayTotal) overlayTotal.textContent = formatINR(payState.grandTotal);
+        if (cardAmountHint) cardAmountHint.textContent = payState.grandTotal.toFixed(2);
+        updateCashPaymentState();
         paymentOverlay.classList.add('active');
         document.body.style.overflow = 'hidden';
     }
@@ -260,10 +301,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             const el = document.getElementById(id);
             if (el) el.style.display = '';
         });
-        // Reset to Cash tab
+        // Reset to Cash tab and clear payment inputs/state
         showPayTab('Cash');
         payState.upiStatus  = null;
         payState.cardStatus = null;
+        payState.amountReceived = 0;
+        payState.changeAmount = 0;
+        const cash = document.getElementById('cashTendered');
+        if (cash) cash.value = '';
+        const change = document.getElementById('cashChange');
+        if (change) change.textContent = formatINR(0);
+        updateCashPaymentState();
     }
 
     if (payOverlayClose) {
@@ -291,57 +339,145 @@ document.addEventListener('DOMContentLoaded', async () => {
         radio.addEventListener('change', (e) => { payState.cardStatus = e.target.value; });
     });
 
-    // ── 6. UPI QR FROM SETTINGS ──────────────────────────────────────────────
-    (function loadUPIDetails() {
-        const settings = JSON.parse(localStorage.getItem('appSettings')) || {};
-        const upiIdEl    = document.getElementById('displayUpiId');
-        const upiNameEl  = document.getElementById('displayUpiName');
-        const upiQrEl    = document.getElementById('displayUpiQr');
-        if (upiIdEl   && settings.upiId)      upiIdEl.textContent = settings.upiId;
-        if (upiNameEl && settings.upiName)    upiNameEl.textContent = settings.upiName;
-        if (upiQrEl   && settings.upiQrImage) {
-            upiQrEl.src           = settings.upiQrImage;
-            upiQrEl.style.display = 'block';
+    // ── 6. LOAD PERSISTED UPI SETTINGS FROM BACKEND ─────────────────────────
+    async function loadUPIDetails() {
+        const upiIdEl = document.getElementById('upiIdDisplay');
+        const upiNameEl = document.getElementById('upiBusinessDisplay');
+        const qrContainer = document.getElementById('upiQrDisplay');
+        if (upiIdEl) upiIdEl.textContent = '';
+        if (upiNameEl) upiNameEl.textContent = '';
+        if (qrContainer) {
+            qrContainer.innerHTML = '<div class="text-muted small">Loading QR code…</div>';
         }
-    })();
+        try {
+            const res = await apiFetch(`${NODE_API}/settings`);
+            if (!res.ok) throw new Error(`Settings server error ${res.status}`);
+            const settings = await res.json();
+            const upiId = settings.upi_id || settings.upiId || '';
+            const businessName = settings.business_name || settings.upiName || '';
+            const qrImage = settings.upi_qr_image || settings.qrImage || settings.upiQrImage || '';
 
-    // ── 7. PAYMENT CONFIRM BUTTONS ────────────────────────────────────────────
+            if (upiIdEl) upiIdEl.textContent = upiId || 'UPI ID not configured';
+            if (upiNameEl) upiNameEl.textContent = businessName;
+            if (qrContainer) {
+                qrContainer.innerHTML = '';
+                if (qrImage) {
+                    const img = document.createElement('img');
+                    img.alt = 'UPI QR Code';
+                    img.style.cssText = 'max-width:180px;max-height:180px;border-radius:10px;';
+                    img.src = new URL(qrImage, NODE_API).href;
+                    qrContainer.appendChild(img);
+                } else {
+                    qrContainer.innerHTML = '<div class="text-muted small">No QR code configured in Settings.</div>';
+                }
+            }
+        } catch (err) {
+            console.error('Failed to load UPI settings:', err);
+            if (qrContainer) qrContainer.innerHTML = '<div class="text-danger small">Unable to load UPI settings.</div>';
+            if (upiIdEl) upiIdEl.textContent = 'UPI settings unavailable';
+        }
+    }
+    await loadUPIDetails();
+
+    // ── 7. PAYMENT CONFIRMATION + VALIDATION ─────────────────────────────────
     const btnConfirmCash = document.getElementById('btnConfirmCash');
     const btnConfirmUPI  = document.getElementById('btnConfirmUPI');
     const btnConfirmCard = document.getElementById('btnConfirmCard');
 
+    function updateCashPaymentState() {
+        const receivedEl = document.getElementById('cashTendered');
+        const changeEl = document.getElementById('cashChange');
+        const messageEl = document.getElementById('cashPaymentMessage');
+        const received = Math.max(0, parseFloat(receivedEl?.value || '0') || 0);
+        const total = Number(payState.grandTotal.toFixed(2));
+        const change = Number((received - total).toFixed(2));
+        payState.amountReceived = received;
+        payState.changeAmount = change >= 0 ? change : 0;
+
+        if (changeEl) changeEl.textContent = formatINR(Math.max(0, change));
+        if (messageEl) {
+            if (received < total) {
+                messageEl.textContent = received > 0
+                    ? `Insufficient cash received. Remaining amount: ${formatINR(total - received)}`
+                    : 'Enter the amount received from the customer.';
+                messageEl.className = 'small text-danger mt-2';
+            } else {
+                messageEl.textContent = received === total
+                    ? 'Exact amount received.'
+                    : `Change to return: ${formatINR(change)}`;
+                messageEl.className = 'small text-success mt-2';
+            }
+        }
+        if (btnConfirmCash) btnConfirmCash.disabled = received < total;
+    }
+
+    function setPaymentStatus(type, status) {
+        payState[type === 'upi' ? 'upiStatus' : 'cardStatus'] = status;
+        const prefix = type === 'upi' ? 'upiStatus' : 'cardStatus';
+        document.querySelectorAll(`#panel${type === 'upi' ? 'UPI' : 'Card'} .status-btn`).forEach(btn => btn.classList.remove('active'));
+        const target = document.getElementById(`${prefix}${status}`);
+        if (target) target.classList.add('active');
+    }
+
+    window.setUpiStatus = status => setPaymentStatus('upi', status);
+    window.setCardStatus = status => setPaymentStatus('card', status);
+    window.calcChange = updateCashPaymentState;
+    window.switchPayTab = method => window.showPayTab(method);
+    window.resetPayOverlay = () => resetOverlayScreens();
+
+    document.getElementById('cashTendered')?.addEventListener('input', updateCashPaymentState);
+
     if (btnConfirmCash) {
         btnConfirmCash.addEventListener('click', async () => {
-            await finalizePayment({ method: 'Cash', status: 'Paid', txnRef: null });
+            updateCashPaymentState();
+            if (payState.amountReceived < payState.grandTotal) {
+                showOverlayAlert('Insufficient cash received.');
+                return;
+            }
+            await finalizePayment({
+                method: 'CASH',
+                status: 'Paid',
+                txnRef: null,
+                amountReceived: payState.amountReceived,
+                changeAmount: payState.changeAmount
+            });
         });
     }
 
     if (btnConfirmUPI) {
         btnConfirmUPI.addEventListener('click', async () => {
-            const ref    = (document.getElementById('upiRefInput') || {}).value?.trim() || '';
-            const status = payState.upiStatus;
-            if (!status) { showOverlayAlert('Please select a payment status.'); return; }
-            if (!ref && status === 'Paid') { showOverlayAlert('Please enter the UPI Transaction ID.'); return; }
-            if (status === 'Failed')  { showFailedScreen(); return; }
-            if (status === 'Pending') { showOverlayAlert('⏳ Payment is still Pending. Please wait for confirmation.'); return; }
-            await finalizePayment({ method: 'UPI', status: 'Paid', txnRef: ref });
+            const ref = (document.getElementById('upiRefInput') || {}).value?.trim() || '';
+            if (payState.upiStatus !== 'Paid') {
+                showOverlayAlert(payState.upiStatus === 'Pending'
+                    ? 'UPI payment is still pending.'
+                    : payState.upiStatus === 'Failed'
+                        ? 'UPI payment failed.'
+                        : 'Please select Paid and manually confirm the UPI payment.');
+                return;
+            }
+            await finalizePayment({ method: 'UPI', status: 'Paid', txnRef: ref || null });
         });
     }
 
     if (btnConfirmCard) {
         btnConfirmCard.addEventListener('click', async () => {
-            const ref      = (document.getElementById('cardRefInput')   || {}).value?.trim() || '';
-            const status   = payState.cardStatus;
-            const cardType = (document.getElementById('cardTypeSelect') || {}).value || 'Card';
-            if (!status) { showOverlayAlert('Please select a payment status.'); return; }
-            if (!ref && status === 'Paid') { showOverlayAlert('Please enter the Card Transaction ID.'); return; }
-            if (status === 'Failed') { showFailedScreen(); return; }
-            await finalizePayment({ method: cardType, status: 'Paid', txnRef: ref });
+            const ref = (document.getElementById('cardRefInput') || {}).value?.trim() || '';
+            if (payState.cardStatus !== 'Paid') {
+                showOverlayAlert(payState.cardStatus === 'Failed'
+                    ? 'Card payment failed.'
+                    : 'Please select Paid and manually confirm the card payment.');
+                return;
+            }
+            await finalizePayment({ method: 'CARD', status: 'Paid', txnRef: ref || null });
         });
     }
 
     // ── 8. FINALIZE PAYMENT ───────────────────────────────────────────────────
-    async function finalizePayment({ method, status, txnRef }) {
+    let checkoutInProgress = false;
+
+    async function finalizePayment({ method, status, txnRef, amountReceived = null, changeAmount = null }) {
+        if (checkoutInProgress) return;
+        checkoutInProgress = true;
         const custName  = (document.getElementById('custName') || {}).value?.trim() || 'Walk-in Customer';
         let subtotal = 0, totalGST = 0, totalCost = 0;
         cart.forEach(item => {
@@ -357,6 +493,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             payment_method: method,
             payment_status: status,
             txn_reference:  txnRef  || null,
+            amount_received: method === 'CASH' ? parseFloat(Number(amountReceived ?? 0).toFixed(2)) : null,
+            change_amount:   method === 'CASH' ? parseFloat(Number(changeAmount ?? 0).toFixed(2)) : null,
             total_amount:   parseFloat(grandTotal.toFixed(2)),
             cost_amount:    parseFloat(totalCost.toFixed(2)),
             cgst_amount:    parseFloat((totalGST / 2).toFixed(2)),
@@ -382,19 +520,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             const data = await res.json();
-            showSuccessScreen(data.saleId, method, txnRef, grandTotal, custName);
 
-            cart = [];
-            if (document.getElementById('custName'))  document.getElementById('custName').value  = '';
-            if (document.getElementById('custPhone')) document.getElementById('custPhone').value = '';
-            if (discountInput) discountInput.value = '0';
-            renderCart();
+            // Clear the completed bill BEFORE showing the success screen.
+            // This guarantees the underlying billing page is already ready for
+            // the next customer.
+            resetCurrentBill();
+            checkoutInProgress = false;
+
+            showSuccessScreen(data.saleId, method, txnRef, grandTotal, custName);
+            closePaymentOverlay();
             await loadProductsFromAPI();
 
         } catch (err) {
             console.error('Checkout failed:', err);
-            showOverlayAlert(`❌ Server error: ${err.message}\n\nMake sure Node.js server is running and ngrok is active.`);
-        } finally {
+            checkoutInProgress = false;
+            showOverlayAlert(`Payment could not be completed. ${err.message}`);
             if (btnConfirmCash) { btnConfirmCash.disabled = false; btnConfirmCash.innerHTML = '<i class="bi bi-check-circle-fill"></i> Confirm Cash Payment'; }
             if (btnConfirmUPI)  { btnConfirmUPI.disabled  = false; btnConfirmUPI.innerHTML  = '<i class="bi bi-qr-code"></i> Confirm UPI Payment'; }
             if (btnConfirmCard) { btnConfirmCard.disabled = false; btnConfirmCard.innerHTML = '<i class="bi bi-credit-card-2-front-fill"></i> Confirm Card Payment'; }
@@ -432,7 +572,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const btnNewBill = document.getElementById('btnNewBill');
     if (btnNewBill) {
-        btnNewBill.addEventListener('click', () => closePayOverlay());
+        btnNewBill.addEventListener('click', () => {
+            // Always perform a full reset here. Do not rely only on the
+            // checkout-success handler because this button is the user's
+            // explicit boundary between two bills.
+            checkoutInProgress = false;
+            resetCurrentBill();
+            closePayOverlay();
+        });
     }
 
     function showOverlayAlert(msg) {
@@ -451,6 +598,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         toast.style.display = 'block';
         clearTimeout(toast._timer);
         toast._timer = setTimeout(() => { toast.style.display = 'none'; }, 3500);
+    }
+
+    function formatINR(value) {
+        return new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(Number(value) || 0);
     }
 
     // ── INITIAL LOAD ──────────────────────────────────────────────────────────
