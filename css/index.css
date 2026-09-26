@@ -6,8 +6,8 @@
 
 body {
     font-family: Arial, Helvetica, sans-serif;
-    background: #f8fafc;
-    color: #111827;
+    background: #f1f1f2;
+    color: #020202;
     line-height: 1.5;
 }
 
@@ -44,7 +44,7 @@ body {
     align-items: center;
     justify-content: center;
 
-    background: #2563eb;
+    background: #0A4D68;
     color: white;
 
     border-radius: 9px;
@@ -67,7 +67,7 @@ body {
 
 .navbar nav a:hover,
 .navbar nav a.active {
-    color: #2563eb;
+    color: #0A4D68;
 }
 
 
@@ -96,7 +96,7 @@ body {
 
     padding: 7px 13px;
 
-    background: #eff6ff;
+    background: #ecedef;
     color: #2563eb;
 
     border-radius: 20px;
@@ -116,7 +116,7 @@ body {
 }
 
 .hero h1 span {
-    color: #2563eb;
+    color: #25bad1;
 }
 
 .hero p {
@@ -159,23 +159,23 @@ body {
 }
 
 .primary-btn {
-    background: #2563eb;
+    background: #167440;
     color: white;
 }
 
 .primary-btn:hover {
-    background: #1d4ed8;
+    background: #24bcf8;
 }
 
 .secondary-btn {
-    background: white;
-    color: #2563eb;
+    background: #167440;
+    color: #fcfcfc;
 
     border: 1px solid #bfdbfe;
 }
 
 .secondary-btn:hover {
-    background: #eff6ff;
+    background: #24bcf8;
 }
 
 
