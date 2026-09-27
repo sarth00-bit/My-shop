@@ -17,7 +17,130 @@
 
 
 /* ==========================================================================
-   2. SIDEBAR — MOBILE OVERLAY BEHAVIOUR
+   2. TOP NAVBAR — SINGLE ROW AT ALL SCREEN SIZES
+   The navbar has this structure inside <nav>:
+     .container-fluid  →  #sidebarToggle  +  .navbar-brand
+     .header-shop-profile  →  #headerAdminName  +  .header-shop-logo-wrap
+   Both are direct children of <nav>, so we make <nav> itself a single
+   flex row and never let it wrap.
+   ========================================================================== */
+
+/* Force the <nav> itself to be a permanent single-line flex row */
+nav.navbar.fixed-top {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    height: var(--navbar-height) !important;
+    padding: 0 0.75rem !important;
+    overflow: hidden !important;
+}
+
+/* .container-fluid holds the hamburger + brand — let it grow but not shrink below its content */
+nav.navbar.fixed-top > .container-fluid {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+}
+
+/* Hamburger toggle — fixed size, never shrinks */
+nav.navbar.fixed-top > .container-fluid > #sidebarToggle {
+    flex: 0 0 auto !important;
+    margin-right: 0.5rem !important;
+}
+
+/* Brand "MyShop Manager" — truncates with ellipsis if really tight */
+nav.navbar.fixed-top > .container-fluid > .navbar-brand {
+    flex: 0 1 auto !important;
+    min-width: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    margin-right: 0 !important;
+    font-size: 1.05rem !important;
+}
+
+/* Profile area — fixed to the right, never wraps or overflows downward */
+nav.navbar.fixed-top > .header-shop-profile,
+.header-shop-profile {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    flex: 0 0 auto !important;
+    gap: 8px !important;
+    margin-left: auto !important;
+    padding-left: 8px !important;
+    min-width: 0 !important;
+}
+
+/* Admin name — always visible, truncates gracefully */
+.header-admin-name {
+    display: block !important;        /* override the previous "display:none" */
+    color: #ffffff !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 140px !important;
+}
+
+/* Logo wrap — consistent size at all breakpoints */
+.header-shop-logo-wrap {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    flex-shrink: 0 !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(255,255,255,0.12) !important;
+    border: 1px solid rgba(255,255,255,0.35) !important;
+}
+
+.header-shop-logo {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    background: #ffffff !important;
+}
+
+.header-shop-logo-fallback {
+    color: #ffffff !important;
+    font-size: 19px !important;
+}
+
+/* On very small phones (< 360px) hide the admin text but keep the logo */
+@media (max-width: 359px) {
+    .header-admin-name {
+        display: none !important;
+    }
+}
+
+/* Tablet / mid range — allow a bit more name width */
+@media (min-width: 576px) {
+    .header-admin-name {
+        max-width: 180px !important;
+        font-size: 14px !important;
+    }
+
+    .header-shop-logo-wrap {
+        width: 40px !important;
+        height: 40px !important;
+        min-width: 40px !important;
+    }
+}
+
+
+/* ==========================================================================
+   3. SIDEBAR — MOBILE OVERLAY BEHAVIOUR
    On screens ≤ 991px the sidebar slides in as a full-height overlay
    so it never squashes the main content column.
    ========================================================================== */
@@ -92,40 +215,6 @@
     body.sidebar-collapsed #sidebar > *,
     body.sidebar-collapsed .sidebar > * {
         display: flex !important;
-    }
-}
-
-
-/* ==========================================================================
-   3. TOP NAVBAR
-   ========================================================================== */
-@media (max-width: 575.98px) {
-
-    nav.navbar.fixed-top,
-    .top-navbar {
-        padding: 0 0.6rem !important;
-    }
-
-    nav.navbar.fixed-top .navbar-brand {
-        font-size: 1rem !important;
-    }
-
-    .header-admin-name {
-        display: none !important;  /* hide name on very small screens */
-    }
-
-    .header-shop-logo-wrap {
-        width: 34px !important;
-        height: 34px !important;
-        min-width: 34px !important;
-    }
-}
-
-@media (min-width: 576px) and (max-width: 991.98px) {
-
-    .header-admin-name {
-        max-width: 130px !important;
-        font-size: 13px !important;
     }
 }
 
@@ -291,7 +380,7 @@
 @media (max-width: 767.98px) {
 
     /* Hide less-critical columns on phones */
-    .table thead tr th:nth-child(4),  /* Contact */
+    .table thead tr th:nth-child(4),
     .table tbody tr td:nth-child(4) {
         display: none !important;
     }
@@ -489,7 +578,6 @@
         -webkit-overflow-scrolling: touch;
     }
 
-    /* Slightly more padding for touch targets */
     .table td,
     .table th {
         padding: 0.6rem 0.75rem !important;
@@ -539,7 +627,6 @@
         font-size: 0.875rem !important;
     }
 
-    /* Full-width buttons in filter bars */
     .card-body .btn {
         min-height: 40px;
     }
@@ -568,7 +655,7 @@ body.dark-mode.sidebar-open::before,
 
 
 /* ==========================================================================
-   17. PRINT — keep unchanged (already in style.css, listed for safety)
+   17. PRINT
    ========================================================================== */
 @media print {
 
@@ -591,7 +678,7 @@ body.dark-mode.sidebar-open::before,
 
 
 /* ==========================================================================
-   18. UTILITY: SAFE MINIMUM TAP TARGET (44 × 44 px)
+   18. UTILITY: MINIMUM TAP TARGET
    ========================================================================== */
 @media (max-width: 991.98px) {
 
@@ -602,7 +689,6 @@ body.dark-mode.sidebar-open::before,
         min-height: 40px;
     }
 
-    /* Sidebar nav links need generous tap areas */
     #sidebarMenu .nav-link,
     #sidebar .nav-link {
         padding: 0.85rem 1rem !important;
