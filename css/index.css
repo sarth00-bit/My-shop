@@ -159,23 +159,23 @@ body {
 }
 
 .primary-btn {
-    background: #167440;
+    background: #0A4D68;
     color: white;
 }
 
 .primary-btn:hover {
-    background: #24bcf8;
+    background: #167440;
 }
 
 .secondary-btn {
-    background: #167440;
+    background: #0A4D68;
     color: #fcfcfc;
 
     border: 1px solid #bfdbfe;
 }
 
 .secondary-btn:hover {
-    background: #24bcf8;
+    background: #167440;
 }
 
 
