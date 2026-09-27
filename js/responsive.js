@@ -1,6 +1,7 @@
 // =============================================================
 // responsive.js — MyShop Manager
-// Adds mobile sidebar overlay behaviour (screens ≤ 991 px).
+// 1. Mobile sidebar overlay (open / close / backdrop)
+// 2. Restores desktop collapse on resize
 // Load AFTER app.js in every HTML page that has a sidebar:
 //   <script src="./js/responsive.js"></script>
 // =============================================================
@@ -8,11 +9,11 @@
 (function () {
     'use strict';
 
-    const MOBILE_BREAKPOINT = 992; // px — matches Bootstrap's lg breakpoint
+    const MOBILE_BP = 992; // px — Bootstrap "lg" breakpoint
 
     // ── helpers ──────────────────────────────────────────────
     function isMobile() {
-        return window.innerWidth < MOBILE_BREAKPOINT;
+        return window.innerWidth < MOBILE_BP;
     }
 
     function openSidebar() {
@@ -24,28 +25,20 @@
         document.body.classList.remove('sidebar-open');
     }
 
-    function toggleSidebar() {
-        if (document.body.classList.contains('sidebar-open')) {
-            closeSidebar();
-        } else {
-            openSidebar();
-        }
-    }
-
-    // ── bootstrap once the DOM is ready ──────────────────────
+    // ── run after DOM is ready ────────────────────────────────
     document.addEventListener('DOMContentLoaded', function () {
 
-        // 1. Intercept the existing sidebar toggle buttons.
-        //    app.js handles desktop collapse; we take over on mobile.
-        const toggleButtons = [
-            document.getElementById('sidebarToggle'),
-            document.getElementById('btnToggleSidebar')
-        ].filter(Boolean);
+        // 1. Find all toggle buttons (hamburger in navbar + settings page btn)
+        //    We replace them with clones to strip any listener added by app.js,
+        //    then attach our unified listener that routes by screen size.
+        var buttonIds = ['sidebarToggle', 'btnToggleSidebar'];
 
-        toggleButtons.forEach(function (btn) {
-            // Clone the button to strip app.js's desktop listener,
-            // then re-attach a new listener that routes by screen size.
-            const clone = btn.cloneNode(true);
+        buttonIds.forEach(function (id) {
+            var btn = document.getElementById(id);
+            if (!btn) return;
+
+            // Clone removes old event listeners
+            var clone = btn.cloneNode(true);
             btn.parentNode.replaceChild(clone, btn);
 
             clone.addEventListener('click', function (e) {
@@ -53,81 +46,85 @@
                 e.stopPropagation();
 
                 if (isMobile()) {
-                    toggleSidebar();
-                } else {
-                    // On desktop, replicate app.js collapse logic
-                    const hidden = document.body.classList.contains('sidebar-collapsed');
-                    document.body.classList.toggle('sidebar-collapsed', !hidden);
-                    if (hidden) {
-                        document.body.classList.remove('sidebar-open');
+                    // Mobile: toggle overlay
+                    if (document.body.classList.contains('sidebar-open')) {
+                        closeSidebar();
+                    } else {
+                        openSidebar();
                     }
+                } else {
+                    // Desktop: original collapse / expand behaviour
+                    var collapsed = document.body.classList.contains('sidebar-collapsed');
+                    document.body.classList.toggle('sidebar-collapsed', !collapsed);
+                    document.body.classList.remove('sidebar-open');
                 }
             });
         });
 
-        // 2. Close sidebar when the backdrop (::before pseudo-element area) is tapped.
-        //    Since ::before isn't directly tappable, we listen on <body> and check
-        //    whether the click landed outside the sidebar.
-        document.body.addEventListener('click', function (e) {
-            if (!isMobile()) return;
-            if (!document.body.classList.contains('sidebar-open')) return;
+        // 2. Close sidebar when tapping the backdrop
+        //    The backdrop is the body::before pseudo-element; we detect a click
+        //    that lands outside the sidebar element itself.
+        document.addEventListener('click', function (e) {
+            if (!isMobile() || !document.body.classList.contains('sidebar-open')) return;
 
-            const sidebar =
+            var sidebar = (
                 document.getElementById('sidebarMenu') ||
                 document.getElementById('sidebar') ||
-                document.querySelector('.sidebar');
+                document.querySelector('.sidebar')
+            );
 
-            const toggleBtn =
-                document.getElementById('sidebarToggle') ||
-                document.getElementById('btnToggleSidebar');
+            var toggleBtns = buttonIds
+                .map(function (id) { return document.getElementById(id); })
+                .filter(Boolean);
 
             if (!sidebar) return;
 
-            const clickedInsideSidebar = sidebar.contains(e.target);
-            const clickedToggleBtn     = toggleBtn && toggleBtn.contains(e.target);
+            var insideSidebar = sidebar.contains(e.target);
+            var insideToggle  = toggleBtns.some(function (b) { return b.contains(e.target); });
 
-            if (!clickedInsideSidebar && !clickedToggleBtn) {
+            if (!insideSidebar && !insideToggle) {
                 closeSidebar();
             }
         });
 
-        // 3. Close sidebar when a nav link inside it is tapped on mobile
-        //    (so the page navigates and the sidebar doesn't stay open).
-        const sidebar =
+        // 3. Close sidebar when a nav link inside is tapped (navigate away)
+        var sidebar = (
             document.getElementById('sidebarMenu') ||
             document.getElementById('sidebar') ||
-            document.querySelector('.sidebar');
+            document.querySelector('.sidebar')
+        );
 
         if (sidebar) {
             sidebar.querySelectorAll('.nav-link').forEach(function (link) {
                 link.addEventListener('click', function () {
-                    if (isMobile()) {
-                        closeSidebar();
-                    }
+                    if (isMobile()) closeSidebar();
                 });
             });
         }
 
-        // 4. On window resize from mobile → desktop, clean up mobile state.
+        // 4. Close sidebar on Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && isMobile()) closeSidebar();
+        });
+
+        // 5. On resize: clean up mobile state when going to desktop
         window.addEventListener('resize', debounce(function () {
             if (!isMobile()) {
-                document.body.classList.remove('sidebar-open');
+                closeSidebar();
             }
         }, 150));
 
-        // 5. On mobile, start with sidebar closed (desktop starts open via app.js).
+        // 6. On mobile page load, ensure sidebar is closed & body scroll is free
         if (isMobile()) {
             closeSidebar();
             document.body.classList.remove('sidebar-collapsed');
         }
 
-        // 6. Prevent body scroll when mobile sidebar is open.
-        const observer = new MutationObserver(function () {
+        // 7. Lock body scroll while mobile sidebar is open
+        var observer = new MutationObserver(function () {
             if (isMobile()) {
                 document.body.style.overflow =
-                    document.body.classList.contains('sidebar-open')
-                        ? 'hidden'
-                        : '';
+                    document.body.classList.contains('sidebar-open') ? 'hidden' : '';
             } else {
                 document.body.style.overflow = '';
             }
@@ -139,12 +136,12 @@
         });
     });
 
-    // ── debounce utility ─────────────────────────────────────
-    function debounce(fn, delay) {
-        let timer;
+    // ── simple debounce ───────────────────────────────────────
+    function debounce(fn, ms) {
+        var t;
         return function () {
-            clearTimeout(timer);
-            timer = setTimeout(fn, delay);
+            clearTimeout(t);
+            t = setTimeout(fn, ms);
         };
     }
 
