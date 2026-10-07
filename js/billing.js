@@ -528,7 +528,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             checkoutInProgress = false;
 
             showSuccessScreen(data.saleId, method, txnRef, grandTotal, custName);
-            closePaymentOverlay();
+            closePayOverlay();
             await loadProductsFromAPI();
 
         } catch (err) {
