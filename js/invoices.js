@@ -26,7 +26,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnPrintInvoice     = document.getElementById('btnPrintInvoice');
 
     let allInvoices = [];
-    let bsModal     = null;
+    let bsModal = null;
+    let modalReturnFocus = null;
 
     function fmt(val) {
         const n = parseFloat(val);
@@ -109,16 +110,60 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ── 4. VIEW INVOICE MODAL ─────────────────────────────────────────────────
     window.viewInvoiceModal = async function(saleId) {
         setModalLoading(saleId);
+
         const modalEl = document.getElementById('invoiceDetailModal');
         if (!modalEl) return;
-        bsModal = bsModal || new bootstrap.Modal(modalEl);
+
+        // Remember the button that opened the modal.
+        // Bootstrap can return keyboard focus to it after closing.
+        const activeElement = document.activeElement;
+
+        if (activeElement instanceof HTMLElement && !modalEl.contains(activeElement)) {
+            modalReturnFocus = activeElement;
+        } else {
+            modalReturnFocus = null;
+        }
+
+        // Create the Bootstrap modal only once.
+        if (!bsModal) {
+            bsModal = new bootstrap.Modal(modalEl);
+
+            // IMPORTANT:
+            // Remove focus from anything inside the modal BEFORE Bootstrap
+            // applies aria-hidden="true".
+            modalEl.addEventListener('hide.bs.modal', () => {
+                const active = document.activeElement;
+
+                if (active instanceof HTMLElement && modalEl.contains(active)) {
+                    active.blur();
+                }
+            });
+
+            // Restore focus to the View button after the modal is completely hidden.
+            modalEl.addEventListener('hidden.bs.modal', () => {
+                if (
+                    modalReturnFocus &&
+                    document.contains(modalReturnFocus)
+                ) {
+                    modalReturnFocus.focus();
+                }
+
+                modalReturnFocus = null;
+            });
+        }
+
         bsModal.show();
 
         try {
             const res = await apiFetch(`${NODE_API}/sales/${saleId}`);
-            if (!res.ok) throw new Error(`Could not load invoice #${saleId}`);
+
+            if (!res.ok) {
+                throw new Error(`Could not load invoice #${saleId}`);
+            }
+
             const inv = await res.json();
             populateModal(inv);
+
         } catch (err) {
             console.error('Invoice detail fetch failed:', err);
             setModalError(err.message);
