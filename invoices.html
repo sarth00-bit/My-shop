@@ -59,7 +59,7 @@
     <div class="d-flex" id="wrapper">
         
         <!-- 📱 Collapsible Sidebar -->
-        <div class="d-flex flex-column p-3 bg-dark text-white sidebar shadow" id="sidebarMenu" style="width: 250px; min-height: 100vh;">
+        <div class="d-flex flex-column p-3 bg-dark text-white sidebar shadow" id="sidebarMenu">
             <ul class="nav nav-pills flex-column mb-auto">
                 <li class="nav-item mb-1">
                     <a href="Dashboard.html" class="nav-link text-white"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
@@ -190,11 +190,11 @@
                         <thead class="table-light">
                             <tr>
                                 <th>Item</th>
-                                <th style="width: 70px;">Qty</th>
-                                <th style="width: 100px;">Price</th>
-                                <th style="width: 80px;">GST %</th>
-                                <th style="width: 100px;">discount</th>
-                                <th style="width: 110px;">Total</th>
+                                <th class="invoice-col-qty">Qty</th>
+                                <th class="invoice-col-price">Price (Incl. GST)</th>
+                                <th class="invoice-col-gst">GST %</th>
+                                <th class="invoice-col-discount">Discount</th>
+                                <th class="invoice-col-total">Total</th>
                             </tr>
                         </thead>
                         <tbody id="modalInvoiceItems">
@@ -202,15 +202,27 @@
                         </tbody>
                     </table>
 
+                    <div class="small text-muted text-end mb-2">
+                        Prices shown above are GST-inclusive; GST is displayed separately below.
+                    </div>
+
                     <!-- Calculation Totals -->
                     <div class="row justify-content-end">
                         <div class="col-md-5">
                             <div class="d-flex justify-content-between mb-1">
-                                <span class="text-muted">Subtotal:</span>
+                                <span class="text-muted">Taxable Amount (Excl. GST):</span>
                                 <span id="modalSubtotal">₹0.00</span>
                             </div>
                             <div class="d-flex justify-content-between mb-1">
-                                <span class="text-muted">GST:</span>
+                                <span class="text-muted">CGST:</span>
+                                <span id="modalCGST">₹0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted">SGST:</span>
+                                <span id="modalSGST">₹0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted">Total GST Included:</span>
                                 <span id="modalGST">₹0.00</span>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
@@ -244,9 +256,9 @@
 
     <!-- Bootstrap & Custom Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="./js/app.js"></script>
-    <script src="./js/config.js"></script>
-    <script src="./js/responsive.js"></script>
-    <script src="./js/invoices.js"></script>
+    <script src="../Html/js/app.js"></script>
+    <script src="../Html/js/config.js"></script>
+    <script src="../Html/js/responsive.js"></script>  
+    <script src="../Html/js/invoices.js"></script>
 </body>
-</html> 
+</html>
