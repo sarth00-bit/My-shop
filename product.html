@@ -4,285 +4,268 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Products Management - MyShop Manager</title>
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/responsive.css">
 </head>
 <body>
-
-    <!-- 🔝 Top Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top shadow-sm">
-        <div class="container-fluid">
-            <button class="btn btn-outline-light me-2" id="sidebarToggle">
-                <i class="bi bi-list"></i>
-            </button>
-            <a class="navbar-brand fw-bold" href="Dashboard.html">
-                <i class="bi bi-shop me-2"></i>MyShop Manager
-            </a>
-        </div>
-
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top shadow-sm">
+    <div class="container-fluid">
+        <button class="btn btn-outline-light me-2" id="sidebarToggle"><i class="bi bi-list"></i></button>
+        <a class="navbar-brand fw-bold" href="Dashboard.html"><i class="bi bi-shop me-2"></i>MyShop Manager</a>
         <div class="header-shop-profile" id="headerShopProfile">
-
-            <!-- Admin name appears LEFT of shop logo -->
-            <span class="header-admin-name" id="headerAdminName">
-                Admin
-            </span>
-
-            <!-- Shop logo stays at the RIGHT -->
-            <div class="header-shop-logo-wrap"
-                id="headerShopLogoWrap"
-                title="Shop Logo">
-
-                <img
-                    id="headerShopLogo"
-                    class="header-shop-logo"
-                    src=""
-                    alt="Shop Logo"
-                >
-
-                <!-- Shown only when no logo has been saved -->
-                <i
-                    id="headerShopLogoFallback"
-                    class="bi bi-shop header-shop-logo-fallback">
-                </i>
-
-            </div>
-
-        </div>
-    </nav>
-
-    <!-- 🏗️ Main Layout Container -->
-    <div class="d-flex" id="wrapper">
-        
-        <!-- 📱 Collapsible Sidebar -->
-        <div class="d-flex flex-column p-3 bg-dark text-white sidebar shadow" id="sidebarMenu" style="width: 250px; min-height: 100vh;">
-            <ul class="nav nav-pills flex-column mb-auto">
-                <li class="nav-item mb-1">
-                    <a href="Dashboard.html" class="nav-link text-white"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
-                </li>  
-                <li class="mb-1">
-                    <a href="billing.html" class="nav-link text-white"><i class="bi bi-receipt me-2"></i> Billing</a>
-                </li>
-                <li class="mb-1">
-                    <a href="product.html" class="nav-link active text-white"><i class="bi bi-box-seam me-2"></i> Products</a>
-                </li>
-                <li class="mb-1">
-                    <a href="invoices.html" class="nav-link text-white"><i class="bi bi-file-earmark-text me-2"></i> Invoices</a>
-                </li>
-                <li class="mb-1">
-                    <a href="report.html" class="nav-link text-white"><i class="bi bi-bar-chart-line me-2"></i> Report</a>
-                </li>
-                <li class="mb-1">
-                    <a href="settings.html" class="nav-link text-white"><i class="bi bi-gear me-2"></i> Settings</a>
-                </li>
-            </ul>
-            <hr class="text-secondary">
-            <div class="d-flex align-items-center justify-content-between px-2">
-                <div class="small">
-                    <i class="bi bi-person-badge text-info me-1"></i>
-                    <span>ID: <strong class="text-light">USR-001</strong></span>
-                </div>
-                <a href="index.html" class="btn btn-sm btn-outline-danger" title="Sign Out">
-                    <i class="bi bi-box-arrow-right"></i>
-                </a>
+            <span class="header-admin-name" id="headerAdminName">Admin</span>
+            <div class="header-shop-logo-wrap" id="headerShopLogoWrap" title="Shop Logo">
+                <img id="headerShopLogo" class="header-shop-logo" src="" alt="Shop Logo">
+                <i id="headerShopLogoFallback" class="bi bi-shop header-shop-logo-fallback"></i>
             </div>
         </div>
+    </div>
+</nav>
 
-        <!-- 📦 Main Page Content -->
-        <main class="flex-grow-1 p-4">
-            <div class="container-fluid">
-                
-                <!-- Title & Action Bar -->
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 class="fw-bold text-dark mb-0"><i class="bi bi-box-seam me-2"></i>Product Management</h2>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#productModal" id="btnAddNewProduct">
-                        <i class="bi bi-plus-lg me-1"></i> Add Product
-                    </button>
-                </div>
-
-                <!-- 🔍 Search & Filters Toolbar -->
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <!-- Search -->
-                            <div class="col-md-4">
-                                <div class="input-group">
-                                    <span class="input-group-text bg-white text-muted"><i class="bi bi-search"></i></span>
-                                    <input type="text" class="form-control" id="searchProductInput" placeholder="Search by name or SKU...">
-                                </div>
-                            </div>
-                            <!-- Product Type Filter -->
-                            <div class="col-md-3">
-                                <select class="form-select" id="filterTypeSelect">
-                                    <option value="">All Product Types</option>
-                                    <option value="Shirts">Shirts</option>
-                                    <option value="Jeans">Jeans</option>
-                                    <option value="T-Shirts">T-Shirts</option>
-                                    <option value="Traditional">Traditional</option>
-                                </select>
-                            </div>
-                            <!-- Stock Filter -->
-                            <div class="col-md-3">
-                                <select class="form-select" id="filterStockSelect">
-                                    <option value="">All Stock Levels</option>
-                                    <option value="inStock">In Stock</option>
-                                    <option value="lowStock">Low Stock Alert</option>
-                                    <option value="outOfStock">Out of Stock</option>
-                                </select>
-                            </div>
-                            <!-- Price Sort -->
-                            <div class="col-md-2">
-                                <select class="form-select" id="sortPriceSelect">
-                                    <option value="">Sort Price</option>
-                                    <option value="lowToHigh">Price: Low to High</option>
-                                    <option value="highToLow">Price: High to Low</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 📋 Product Data Table -->
-                <div class="card border-0 shadow-sm">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th scope="col">SKU / Code</th>
-                                    <th scope="col">Product Name</th>
-                                    <th scope="col">Type</th>
-                                    <th scope="col">Brand</th>
-                                    <th scope="col">Size / Color</th>
-                                    <th scope="col">Buy Price</th>
-                                    <th scope="col">Sell Price</th>
-                                    <th scope="col">GST Rate</th>
-                                    <th scope="col">Stock Qty</th>
-                                    <th scope="col">Min Stock</th>
-                                    <th scope="col" class="text-end">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="productsTableBody">
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-            </div>
-        </main>
+<div class="d-flex" id="wrapper">
+    <div class="d-flex flex-column p-3 bg-dark text-white sidebar shadow" id="sidebarMenu">
+        <ul class="nav nav-pills flex-column mb-auto">
+            <li class="nav-item mb-1"><a href="Dashboard.html" class="nav-link text-white"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+            <li class="mb-1"><a href="billing.html" class="nav-link text-white"><i class="bi bi-receipt me-2"></i>Billing</a></li>
+            <li class="mb-1"><a href="product.html" class="nav-link active text-white"><i class="bi bi-box-seam me-2"></i>Products</a></li>
+            <li class="mb-1"><a href="invoices.html" class="nav-link text-white"><i class="bi bi-file-earmark-text me-2"></i>Invoices</a></li>
+            <li class="mb-1"><a href="report.html" class="nav-link text-white"><i class="bi bi-bar-chart-line me-2"></i>Report</a></li>
+            <li class="mb-1"><a href="settings.html" class="nav-link text-white"><i class="bi bi-gear me-2"></i>Settings</a></li>
+        </ul>
+        <hr class="text-secondary">
+        <div class="d-flex align-items-center justify-content-between px-2">
+            <div class="small"><i class="bi bi-person-badge text-info me-1"></i><span>ID: <strong class="text-light">USR-001</strong></span></div>
+            <a href="index.html" class="btn btn-sm btn-outline-danger" title="Sign Out"><i class="bi bi-box-arrow-right"></i></a>
+        </div>
     </div>
 
-    <!-- Add / Edit Product Modal -->
-    <div class="modal fade" id="productModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title fw-bold" id="productModalTitle">Add New Product</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    <main class="flex-grow-1 p-4">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center mb-4 gap-2 flex-wrap">
+                <h2 class="fw-bold text-dark mb-0"><i class="bi bi-box-seam me-2"></i>Product Management</h2>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button class="btn btn-outline-secondary" id="btnExportProducts"><i class="bi bi-download me-1"></i>Export CSV</button>
+                    <label class="btn btn-outline-secondary mb-0">
+                        <i class="bi bi-upload me-1"></i>Import CSV
+                        <input type="file" id="productImportFile" accept=".csv,text/csv" hidden>
+                    </label>
+                    <button class="btn btn-primary" id="btnAddNewProduct"><i class="bi bi-plus-lg me-1"></i>Add Product</button>
                 </div>
-                <form id="productForm">
-                    <div class="modal-body">
-                        <input type="hidden" id="productId">
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">SKU / Item Code</label>
-                            <input type="text" id="productSku" class="form-control" placeholder="e.g. SKU-1007" required>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-3"><div class="card border-0 shadow-sm product-stat product-stat-products"><div class="card-body"><small class="text-muted">Total Products</small><h4 class="fw-bold mb-0" id="statProducts">0</h4></div></div></div>
+                <div class="col-md-3"><div class="card border-0 shadow-sm product-stat product-stat-units"><div class="card-body"><small class="text-muted">Units in Stock</small><h4 class="fw-bold mb-0" id="statUnits">0</h4></div></div></div>
+                <div class="col-md-3"><div class="card border-0 shadow-sm product-stat product-stat-value"><div class="card-body"><small class="text-muted">Stock Cost Value</small><h4 class="fw-bold mb-0" id="statStockValue">₹0.00</h4></div></div></div>
+                <div class="col-md-3"><div class="card border-0 shadow-sm product-stat product-stat-alerts"><div class="card-body"><small class="text-muted">Low / Out of Stock</small><h4 class="fw-bold mb-0" id="statAlerts">0</h4></div></div></div>
+            </div>
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-lg-4">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control" id="searchProductInput" placeholder="Search name, SKU, barcode or category...">
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Product Name</label>
-                            <input type="text" id="productName" class="form-control" placeholder="e.g. Wireless Mouse" required>
-                        </div>
-                        <div class="row g-2 mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Category</label>
+                        <div class="col-lg-2"><select class="form-select" id="filterCategory"><option value="">All Categories</option></select></div>
+                        
+                        <div class="col-lg-2"><select class="form-select" id="filterStock"><option value="">All Stock</option><option value="in">In Stock</option><option value="low">Low Stock</option><option value="out">Out of Stock</option></select></div>
+                        <div class="col-lg-2"><select class="form-select" id="sortProducts"><option value="newest">Newest</option><option value="nameAsc">Name A-Z</option><option value="priceAsc">Selling Price Low-High</option><option value="priceDesc">Selling Price High-Low</option><option value="stockAsc">Stock Low-High</option></select></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 product-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>SKU / Barcode</th><th>Product</th><th>Category</th>
+                                <th>Purchase Price</th><th>Selling Price</th><th>GST</th>
+                                <th>Stock</th><th>Min</th><th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Add/Edit -->
+<div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="productModalTitle">Add Product</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="productForm">
+                <div class="modal-body">
+                    <input type="hidden" id="productId">
+                    <div class="product-form-section mb-3">
+                        <div class="product-form-section-title"><i class="bi bi-box-seam text-primary"></i>Product Information</div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">SKU / Item Code *</label>
+                                <input id="productSku" class="form-control" required maxlength="100" placeholder="e.g. ELEC-001">
+                                <small class="product-field-help">Unique code used to identify the product.</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Barcode</label>
+                                <input id="productBarcode" class="form-control" maxlength="100" placeholder="Scan or enter barcode">
+                                <small class="product-field-help">Optional. Used for faster billing/search.</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Product Name *</label>
+                                <input id="productName" class="form-control" required maxlength="150" placeholder="Enter product name">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Category *</label>
                                 <select id="productCategory" class="form-select" required>
-                                    <option value="Electronics">Electronics</option>
-                                    <option value="Apparel">Apparel</option>
-                                    <option value="Accessories">Accessories</option>
+                                    <option value="">Select Category</option>
+                                    <option value="Electronic">Electronic</option>
                                     <option value="General">General</option>
+                                    <option value="Accessories">Accessories</option>
+                                    <option value="Apparel">Apparel</option>
                                 </select>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Selling Price (₹)</label>
-                                <input type="number" id="productPrice" class="form-control" step="0.01" min="0" placeholder="0.00" required>
+                        </div>
+                    </div>
+
+                    <div class="product-form-section mb-3">
+                        <div class="product-form-section-title"><i class="bi bi-currency-rupee text-primary"></i>Pricing</div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">MRP (Incl. GST)</label>
+                                <input id="productMrp" type="number" class="form-control" min="0" step="0.01" placeholder="0.00">
+                                <small class="product-field-help">Maximum retail price shown to the customer.</small>
                             </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Purchase Price (Excl. GST) *</label>
+                                <input id="productPurchasePrice" type="number" class="form-control" min="0" step="0.01" required placeholder="0.00">
+                                <small class="product-field-help">Your base purchase cost. Purchase GST/ITC is not treated as product cost.</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Selling Price (Incl. GST) *</label>
+                                <input id="productPrice" type="number" class="form-control" min="0" step="0.01" required placeholder="0.00">
+                                <small class="product-field-help">Final customer price before any billing discount; GST is already included.</small>
+                            </div>
+                        </div>
+                        <div class="product-calculation-note mt-3">
+                            <strong>Pricing rule:</strong> Purchase Price is the GST-exclusive base cost. MRP and Selling Price are GST-inclusive customer prices. Billing will extract GST from the final customer price instead of adding GST on top.
+                        </div>
+                    </div>
+
+                    <div class="product-form-section mb-3">
+                        <div class="product-form-section-title"><i class="bi bi-receipt text-primary"></i>Sale GST</div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Total GST (%)</label>
+                                <input id="productGst" type="number" class="form-control" min="0" max="100" step="0.01" value="18">
+                                <small class="product-field-help">GST included in the Selling Price.</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">CGST (%)</label>
+                                <input id="productCgst" type="number" class="form-control" min="0" max="50" step="0.01">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">SGST (%)</label>
+                                <input id="productSgst" type="number" class="form-control" min="0" max="50" step="0.01">
+                            </div>
+                        </div>
+                        <div class="small text-muted mt-2"><i class="bi bi-info-circle me-1"></i>Changing Total GST splits it equally. Changing CGST or SGST recalculates Total GST. Always: CGST + SGST = Total GST.</div>
+                    </div>
+
+                    <div class="product-form-section">
+                        <div class="product-form-section-title"><i class="bi bi-boxes text-primary"></i>Inventory</div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Opening Stock *</label>
+                                <input id="productStock" type="number" class="form-control" min="0" step="1" required placeholder="0">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Minimum Stock Alert *</label>
+                                <input id="productMinStock" type="number" class="form-control" min="0" step="1" value="10" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="fw-bold"><i class="bi bi-calculator me-1"></i>Live Calculation Preview</div>
+                            <span class="product-price-basis">GST-inclusive selling price model</span>
                         </div>
                         <div class="row g-2">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">GST Rate (%)</label>
-                                <input type="number" id="productGst" class="form-control" min="0" max="100" placeholder="18" value="18" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Stock Quantity</label>
-                                <input type="number" id="productStock" class="form-control" min="0" placeholder="0" required>
-                            </div>
+                            <div class="col-6 col-md-4 col-lg-2"><div class="product-preview-card"><div class="preview-label">Selling Price</div><div class="preview-value" id="previewSellingPrice">₹0.00</div></div></div>
+                            <div class="col-6 col-md-4 col-lg-2"><div class="product-preview-card"><div class="preview-label">GST Included</div><div class="preview-value" id="previewGstAmount">₹0.00</div></div></div>
+                            <div class="col-6 col-md-4 col-lg-2"><div class="product-preview-card"><div class="preview-label">Taxable Sale</div><div class="preview-value" id="previewTaxable">₹0.00</div></div></div>
+                            <div class="col-6 col-md-4 col-lg-2"><div class="product-preview-card"><div class="preview-label">Purchase Cost</div><div class="preview-value" id="previewPurchaseCost">₹0.00</div></div></div>
+                            <div class="col-6 col-md-4 col-lg-2"><div class="product-preview-card" id="previewProfitCard"><div class="preview-label">Profit / Unit</div><div class="preview-value" id="previewProfit">₹0.00</div></div></div>
+                            <div class="col-6 col-md-4 col-lg-2"><div class="product-preview-card"><div class="preview-label">Margin</div><div class="preview-value" id="previewMargin">0.0%</div></div></div>
                         </div>
+                        <div class="product-calculation-note mt-2">
+                            <strong>Formula:</strong> GST included = Selling Price × GST ÷ (100 + GST). Taxable Sale = Selling Price − GST. Profit = Taxable Sale − Purchase Price.
+                        </div>
+                        <div class="small text-muted mt-2" id="previewGstSplit">CGST 9.00% + SGST 9.00% = Total GST 18.00%</div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary" id="btnSaveProduct">Save Product</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    </div>
-
-    <!-- 👁️ Modal 2: View Product Details -->
-    <div class="modal fade" id="viewModal" tabindex="-1" aria-labelledby="viewModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-light">
-                    <h5 class="modal-title fw-bold" id="viewModalLabel"><i class="bi bi-info-circle me-2"></i>Product Details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item d-flex justify-content-between"><span>SKU Code:</span> <strong id="viewSKU">SKU-1001</strong></li>
-                        <li class="list-group-item d-flex justify-content-between"><span>Name:</span> <strong id="viewName">Cotton Formal Shirt</strong></li>
-                        <li class="list-group-item d-flex justify-content-between"><span>Type:</span> <span id="viewType">Shirts</span></li>
-                        <li class="list-group-item d-flex justify-content-between"><span>Brand:</span> <span id="viewBrand">Raymond</span></li>
-                        <li class="list-group-item d-flex justify-content-between"><span>Size / Color:</span> <span id="viewSizeColor">L / Blue</span></li>
-                        <li class="list-group-item d-flex justify-content-between"><span>Purchase Price:</span> <span id="viewBuyPrice">₹800.00</span></li>
-                        <li class="list-group-item d-flex justify-content-between"><span>Selling Price:</span> <strong class="text-primary" id="viewSellPrice">₹1,499.00</strong></li>
-                        <li class="list-group-item d-flex justify-content-between"><span>GST Rate:</span> <span id="viewGST">12%</span></li>
-                        <li class="list-group-item d-flex justify-content-between"><span>Current Stock:</span> <span class="badge bg-success" id="viewStock">25 Pcs</span></li>
-                        <li class="list-group-item d-flex justify-content-between"><span>Minimum Stock Level:</span> <span id="viewMinStock">10 Pcs</span></li>
-                    </ul>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 🗑️ Modal 3: Delete Confirmation Dialog -->
-    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle me-2"></i>Confirm Deletion</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="mb-0">Are you sure you want to delete this product? This action cannot be undone.</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-danger" id="btnConfirmDelete"><i class="bi bi-trash me-1"></i> Delete</button>
+                    <button type="submit" class="btn btn-primary" id="btnSaveProduct"><i class="bi bi-check-lg me-1"></i>Save Product</button>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
+</div>
 
-    <!-- Bootstrap & Custom Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="./js/app.js"></script>
-    <script src="./js/config.js"></script>
-    <script src="./js/responsive.js"></script>
-    <script src="./js/Product.js"></script>
+<!-- View -->
+<div class="modal fade" id="viewModal" tabindex="-1" aria-labelledby="viewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-light"><h5 class="modal-title fw-bold" id="viewModalLabel"><i class="bi bi-info-circle me-2"></i>Product Details</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body"><div class="row g-3" id="viewProductBody"></div></div>
+            <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- Stock Adjustment -->
+<div class="modal fade" id="stockModal" tabindex="-1" aria-labelledby="stockModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning"><h5 class="modal-title fw-bold" id="stockModalTitle">Adjust Stock</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <form id="stockForm">
+                <div class="modal-body">
+                    <input type="hidden" id="stockProductId">
+                    <p class="mb-3">Product: <strong id="stockProductName">—</strong></p>
+                    <p>Current Stock: <strong id="stockCurrent">0</strong></p>
+                    <div class="mb-3"><label class="form-label fw-semibold">Adjustment</label><input type="number" id="stockAdjustment" class="form-control" step="1" required placeholder="+10 or -5"></div>
+                    <div class="small text-muted">Use a positive number to add stock or a negative number to remove stock.</div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-warning" type="submit">Update Stock</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+        <div class="modal-header bg-danger text-white"><h5 class="modal-title fw-bold" id="deleteTitle"><i class="bi bi-exclamation-triangle me-2"></i>Delete Product</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body"><p id="deleteMessage" class="mb-0">Are you sure?</p></div>
+        <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-danger" id="btnConfirmDelete">Delete</button></div>
+    </div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../Html/js/app.js"></script>
+<script src="../Html/js/config.js"></script>
+<script src="../Html/js/responsive.js"></script>
+<script src="../Html/js/Product.js"></script>
 </body>
 </html>
