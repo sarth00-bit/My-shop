@@ -17,6 +17,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         cardStatus: null,
         grandTotal: 0,
         subtotal:   0,
+        cgst:       0,
+        sgst:       0,
         totalGST:   0,
         discount:        0,
         amountReceived:  0,
@@ -29,7 +31,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const categoryPills      = document.querySelectorAll('.category-pill');
     const cartTableBody      = document.getElementById('cartTableBody');
     const btnClearCart       = document.getElementById('btnClearCart');
-    const summarySubtotal    = document.getElementById('summarySubtotal');
+    const summarySellingTotal = document.getElementById('summarySellingTotal');
+    const summaryTaxable     = document.getElementById('summaryTaxable');
+    const summaryCGST        = document.getElementById('summaryCGST');
+    const summarySGST        = document.getElementById('summarySGST');
     const summaryGST         = document.getElementById('summaryGST');
     const discountInput      = document.getElementById('discountInput');
     const summaryGrandTotal  = document.getElementById('summaryGrandTotal');
@@ -63,20 +68,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!productGrid) return;
         productGrid.innerHTML = '';
         const products = allProducts.map(p => ({
-            id:       p.id,
-            sku:      p.brand || `SKU-${p.id}`,
-            name:     p.name,
-            category: p.category || 'General',
-            price:    parseFloat(p.selling_price || 0),
-            gstRate:  parseFloat(p.cgst_rate || 0) + parseFloat(p.sgst_rate || 0),
-            stock:    parseInt(p.stock_quantity || 0, 10)
+            id:            p.id,
+            sku:           p.sku || `SKU-${p.id}`,
+            barcode:       p.barcode || '',
+            name:          p.name,
+            category:      p.category || 'General',
+            price:         parseFloat(p.selling_price || 0),
+            purchasePrice: parseFloat(p.purchase_price || 0),
+            cgstRate:      parseFloat(p.cgst_rate || 0),
+            sgstRate:      parseFloat(p.sgst_rate || 0),
+            gstRate:       p.gst_rate !== null && p.gst_rate !== undefined && p.gst_rate !== '' && Number.isFinite(Number(p.gst_rate)) ? Number(p.gst_rate) : (parseFloat(p.cgst_rate || 0) + parseFloat(p.sgst_rate || 0)),
+            stock:         Math.max(0, parseInt(p.stock_quantity || 0, 10) || 0)
         }));
 
         const filtered = products.filter(p => {
             const matchesCat    = currentCategory === 'All' || p.category.toLowerCase() === currentCategory.toLowerCase();
             const matchesSearch = p.name.toLowerCase().includes(searchQuery) ||
                                   String(p.id).includes(searchQuery) ||
-                                  (p.sku || '').toLowerCase().includes(searchQuery);
+                                  (p.sku || '').toLowerCase().includes(searchQuery) ||
+                                  (p.barcode || '').toLowerCase().includes(searchQuery);
             return matchesCat && matchesSearch;
         });
 
@@ -95,7 +105,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div>
                         <h6 class="fw-bold mb-1 text-truncate" title="${product.name}">${product.name}</h6>
                         <small class="text-muted d-block">${product.category}</small>
-                        <small class="text-muted d-block mb-2">Stock: ${product.stock} pcs</small>
+                        <small class="text-muted d-block">${product.sku}${product.barcode ? ` · ${product.barcode}` : ''}</small>
+                        <small class="text-muted d-block mb-2">Stock: ${product.stock} pcs · GST: ${product.gstRate.toFixed(2)}%</small>
                         <div class="d-flex align-items-center justify-content-between mt-2">
                             <span class="fw-bold text-primary fs-6">₹${product.price.toFixed(2)}</span>
                             <button class="btn btn-outline-success btn-sm rounded-circle"
@@ -133,12 +144,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         const dbProduct = allProducts.find(p => p.id === productId);
         if (!dbProduct) return;
         const product = {
-            id:       dbProduct.id,
-            sku:      dbProduct.brand || `SKU-${dbProduct.id}`,
-            name:     dbProduct.name,
-            price:    parseFloat(dbProduct.selling_price || 0),
-            gstRate:  parseFloat(dbProduct.cgst_rate || 0) + parseFloat(dbProduct.sgst_rate || 0),
-            stock:    parseInt(dbProduct.stock_quantity || 0, 10)
+            id:            dbProduct.id,
+            sku:           dbProduct.sku || `SKU-${dbProduct.id}`,
+            barcode:       dbProduct.barcode || '',
+            name:          dbProduct.name,
+            price:         parseFloat(dbProduct.selling_price || 0),
+            purchasePrice: parseFloat(dbProduct.purchase_price || 0),
+            cgstRate:      parseFloat(dbProduct.cgst_rate || 0),
+            sgstRate:      parseFloat(dbProduct.sgst_rate || 0),
+            gstRate:       dbProduct.gst_rate !== null && dbProduct.gst_rate !== undefined && dbProduct.gst_rate !== '' && Number.isFinite(Number(dbProduct.gst_rate)) ? Number(dbProduct.gst_rate) : (parseFloat(dbProduct.cgst_rate || 0) + parseFloat(dbProduct.sgst_rate || 0)),
+            stock:         Math.max(0, parseInt(dbProduct.stock_quantity || 0, 10) || 0)
         };
         const existing = cart.find(i => i.id === product.id);
         if (existing) {
@@ -180,6 +195,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         payState.cardStatus = null;
         payState.grandTotal = 0;
         payState.subtotal = 0;
+        payState.cgst = 0;
+        payState.sgst = 0;
         payState.totalGST = 0;
         payState.discount = 0;
         payState.amountReceived = 0;
@@ -209,24 +226,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     function renderCart() {
         if (!cartTableBody) return;
         cartTableBody.innerHTML = '';
+
         if (!cart.length) {
             cartTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">Cart is empty. Click <strong>+</strong> on any product to add it.</td></tr>`;
-            updateSummary(0, 0, 0);
+            updateSummary(0, 0, 0, 0, 0);
             return;
         }
 
-        let subtotal = 0, totalGST = 0;
+        // Selling prices are GST-inclusive.
+        // Discount is applied to the customer-facing total first.
+        let grossSellingTotal = 0;
+
         cart.forEach(item => {
-            const lineTotal = item.price * item.qty;
-            const lineGST   = lineTotal * (item.gstRate / 100);
-            subtotal  += lineTotal;
-            totalGST  += lineGST;
+            const lineGross = item.price * item.qty;
+            grossSellingTotal += lineGross;
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>
                     <div class="fw-semibold">${item.name}</div>
-                    <small class="text-muted">${item.sku} · GST ${item.gstRate}%</small>
+                    <small class="text-muted">${item.sku}${item.barcode ? ` · ${item.barcode}` : ''}</small>
+                    <small class="billing-cart-gst d-block">GST ${item.gstRate.toFixed(2)}% · CGST ${item.cgstRate.toFixed(2)}% + SGST ${item.sgstRate.toFixed(2)}%</small>
                 </td>
                 <td>₹${item.price.toFixed(2)}</td>
                 <td>
@@ -236,7 +256,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <button class="btn btn-sm btn-outline-secondary px-2 py-0" onclick="updateQty(${item.id}, +1)">+</button>
                     </div>
                 </td>
-                <td class="fw-bold">₹${lineTotal.toFixed(2)}</td>
+                <td class="fw-bold">₹${lineGross.toFixed(2)}</td>
                 <td>
                     <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${item.id})">
                         <i class="bi bi-trash"></i>
@@ -245,16 +265,62 @@ document.addEventListener('DOMContentLoaded', async () => {
             cartTableBody.appendChild(tr);
         });
 
-        const discount = parseFloat(discountInput ? discountInput.value : 0) || 0;
-        updateSummary(subtotal, totalGST, discount);
+        const discount = Math.min(
+            Math.max(0, parseFloat(discountInput ? discountInput.value : 0) || 0),
+            grossSellingTotal
+        );
+
+        // Allocate the invoice-level discount proportionally to each item.
+        // This preserves the correct GST rate for every item when rates differ.
+        let taxableTotal = 0;
+        let totalCGST = 0;
+        let totalSGST = 0;
+
+        cart.forEach(item => {
+            const grossLine = item.price * item.qty;
+            const lineDiscount = grossSellingTotal > 0
+                ? discount * (grossLine / grossSellingTotal)
+                : 0;
+            const customerAmount = Math.max(0, grossLine - lineDiscount);
+
+            const gstRate = Math.max(0, Number(item.gstRate) || 0);
+            const cgstRate = Math.max(0, Number(item.cgstRate) || 0);
+            const sgstRate = Math.max(0, Number(item.sgstRate) || 0);
+
+            // Selling price is GST-inclusive:
+            // GST = Gross × rate / (100 + rate)
+            const lineGST = customerAmount * gstRate / (100 + gstRate);
+            const lineTaxable = customerAmount - lineGST;
+
+            totalCGST += customerAmount * cgstRate / (100 + gstRate);
+            totalSGST += customerAmount * sgstRate / (100 + gstRate);
+            taxableTotal += lineTaxable;
+        });
+
+        updateSummary(
+            grossSellingTotal,
+            taxableTotal,
+            totalCGST,
+            totalSGST,
+            discount
+        );
     }
 
-    function updateSummary(subtotal, totalGST, discount) {
-        const grandTotal = Math.max(0, subtotal + totalGST - discount);
-        if (summarySubtotal)   summarySubtotal.textContent   = `₹${subtotal.toFixed(2)}`;
-        if (summaryGST)        summaryGST.textContent        = `₹${totalGST.toFixed(2)}`;
-        if (summaryGrandTotal) summaryGrandTotal.textContent = `₹${grandTotal.toFixed(2)}`;
-        payState.subtotal   = subtotal;
+    function updateSummary(sellingTotal, taxableAmount, cgst, sgst, discount) {
+        const totalGST = cgst + sgst;
+        const grandTotal = Math.max(0, sellingTotal - discount);
+
+        if (summarySellingTotal) summarySellingTotal.textContent = `₹${sellingTotal.toFixed(2)}`;
+        if (summaryTaxable)     summaryTaxable.textContent     = `₹${taxableAmount.toFixed(2)}`;
+        if (summaryCGST)        summaryCGST.textContent        = `₹${cgst.toFixed(2)}`;
+        if (summarySGST)        summarySGST.textContent        = `₹${sgst.toFixed(2)}`;
+        if (summaryGST)         summaryGST.textContent         = `₹${totalGST.toFixed(2)}`;
+        if (summaryGrandTotal)  summaryGrandTotal.textContent  = `₹${grandTotal.toFixed(2)}`;
+
+        // payState.subtotal is now the GST-exclusive taxable sale.
+        payState.subtotal   = taxableAmount;
+        payState.cgst       = cgst;
+        payState.sgst       = sgst;
         payState.totalGST   = totalGST;
         payState.discount   = discount;
         payState.grandTotal = grandTotal;
@@ -478,29 +544,91 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function finalizePayment({ method, status, txnRef, amountReceived = null, changeAmount = null }) {
         if (checkoutInProgress) return;
         checkoutInProgress = true;
-        const custName  = (document.getElementById('custName') || {}).value?.trim() || 'Walk-in Customer';
-        let subtotal = 0, totalGST = 0, totalCost = 0;
+
+        const custName = (document.getElementById('custName') || {}).value?.trim() || 'Walk-in Customer';
+
+        // Recalculate everything from the current cart immediately before checkout.
+        // Selling prices are GST-inclusive.
+        let grossSellingTotal = 0;
+        let taxableTotal = 0;
+        let totalCGST = 0;
+        let totalSGST = 0;
+        let totalCost = 0;
+
         cart.forEach(item => {
-            subtotal  += item.price * item.qty;
-            totalGST  += item.price * item.qty * (item.gstRate / 100);
-            totalCost += item.price * item.qty * 0.70;
+            grossSellingTotal += item.price * item.qty;
+            totalCost += item.purchasePrice * item.qty;
         });
-        const discount   = payState.discount;
-        const grandTotal = Math.max(0, subtotal + totalGST - discount);
+
+        const discount = Math.min(
+            Math.max(0, Number(payState.discount) || 0),
+            grossSellingTotal
+        );
+
+        cart.forEach(item => {
+            const grossLine = item.price * item.qty;
+            const lineDiscount = grossSellingTotal > 0
+                ? discount * (grossLine / grossSellingTotal)
+                : 0;
+            const customerAmount = Math.max(0, grossLine - lineDiscount);
+
+            const gstRate = Math.max(0, Number(item.gstRate) || 0);
+            const cgstRate = Math.max(0, Number(item.cgstRate) || 0);
+            const sgstRate = Math.max(0, Number(item.sgstRate) || 0);
+
+            const lineGST = gstRate > 0
+                ? customerAmount * gstRate / (100 + gstRate)
+                : 0;
+
+            const lineTaxable = customerAmount - lineGST;
+
+            taxableTotal += lineTaxable;
+            totalCGST += gstRate > 0
+                ? customerAmount * cgstRate / (100 + gstRate)
+                : 0;
+            totalSGST += gstRate > 0
+                ? customerAmount * sgstRate / (100 + gstRate)
+                : 0;
+        });
+
+        const totalGST = totalCGST + totalSGST;
+        const grandTotal = Math.max(0, grossSellingTotal - discount);
+        const profit = taxableTotal - totalCost;
 
         const payload = {
-            customer_name:  custName,
+            customer_name: custName,
             payment_method: method,
             payment_status: status,
-            txn_reference:  txnRef  || null,
-            amount_received: method === 'CASH' ? parseFloat(Number(amountReceived ?? 0).toFixed(2)) : null,
-            change_amount:   method === 'CASH' ? parseFloat(Number(changeAmount ?? 0).toFixed(2)) : null,
-            total_amount:   parseFloat(grandTotal.toFixed(2)),
-            cost_amount:    parseFloat(totalCost.toFixed(2)),
-            cgst_amount:    parseFloat((totalGST / 2).toFixed(2)),
-            sgst_amount:    parseFloat((totalGST / 2).toFixed(2)),
-            discount:       parseFloat(discount.toFixed(2)),
-            items: cart.map(i => ({ id: i.id, quantity: i.qty, selling_price: i.price }))
+            txn_reference: txnRef || null,
+
+            amount_received: method === 'CASH'
+                ? parseFloat(Number(amountReceived ?? 0).toFixed(2))
+                : null,
+
+            change_amount: method === 'CASH'
+                ? parseFloat(Number(changeAmount ?? 0).toFixed(2))
+                : null,
+
+            total_amount: parseFloat(grandTotal.toFixed(2)),
+
+            // GST-exclusive sales value after discount.
+            subtotal_amount: parseFloat(taxableTotal.toFixed(2)),
+
+            cost_amount: parseFloat(totalCost.toFixed(2)),
+            profit_amount: parseFloat(profit.toFixed(2)),
+
+            cgst_amount: parseFloat(totalCGST.toFixed(2)),
+            sgst_amount: parseFloat(totalSGST.toFixed(2)),
+            tax_amount: parseFloat(totalGST.toFixed(2)),
+
+            discount: parseFloat(discount.toFixed(2)),
+
+            items: cart.map(i => ({
+                id: i.id,
+                product_name: i.name,
+                quantity: i.qty,
+                selling_price: i.price
+            }))
         };
 
         [btnConfirmCash, btnConfirmUPI, btnConfirmCard].forEach(b => {
