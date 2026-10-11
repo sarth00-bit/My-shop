@@ -84,11 +84,16 @@ body {
     justify-content: space-between;
     gap: 70px;
 
-    background: white;
+    background: url('./index_img.png') no-repeat center;
+    background-size: cover;
 }
 
 .hero-content {
     max-width: 570px;
+    background-color:white;
+    background-position: center center;
+    right: 80%;
+    padding: 50px;
 }
 
 .badge {
