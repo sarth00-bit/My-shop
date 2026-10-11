@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/responsive.css">
 </head>
-<body>
+<body class="dashboard-page">
 
     <!-- 🔝 Top Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top shadow-sm">
@@ -62,7 +62,7 @@
     <div class="d-flex" id="wrapper">
 
     <!-- 📱 Collapsible Sidebar -->
-<div class="d-flex flex-column p-3 bg-dark text-white sidebar shadow" id="sidebarMenu" style="width: 250px; min-height: 100vh;">
+<div class="d-flex flex-column p-3 bg-dark text-white sidebar shadow" id="sidebarMenu">
     <ul class="nav nav-pills flex-column mb-auto">
         <li class="nav-item mb-1">
             <a href="Dashboard.html" class="nav-link active text-white"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
@@ -109,8 +109,8 @@
             <h2 class="text-dark fw-bold mb-0"><i class="bi bi-speedometer2 me-2"></i>Dashboard Overview</h2>
             <div class="d-flex align-items-center gap-3">
                 <span id="dashboardLastUpdated" class="text-muted small"></span>
-                <span id="dashboardRefreshBadge" class="badge bg-success d-none d-inline-flex align-items-center gap-1" style="display:none">
-                    <span class="spinner-grow spinner-grow-sm" style="width:.5rem;height:.5rem" role="status"></span>
+                <span id="dashboardRefreshBadge" class="badge bg-success d-none d-inline-flex align-items-center gap-1">
+                    <span class="spinner-grow spinner-grow-sm live-spinner" role="status"></span>
                     Live
                 </span>
                 <button class="btn btn-sm btn-outline-primary" onclick="loadDashboard()" title="Refresh Now">
@@ -119,57 +119,46 @@
             </div>
         </div>
         
-    <!-- TOP KPI ROW -->
+        <!-- TOP KPI ROW -->
     <div class="row g-3 mb-4">
-    
-        <!-- Today's Sales (Blue) -->
         <div class="col-md-4">
             <div class="card card-kpi kpi-blue">
-            <div class="card-body d-flex justify-content-between align-items-center p-3">
-                <div>
-                <div class="kpi-title">Today's Sales</div>
-                <div class="kpi-value" id="todaySales">₹0.00</div>
+                <div class="card-body d-flex justify-content-between align-items-center p-3">
+                    <div>
+                        <div class="kpi-title">Total Products</div>
+                        <div class="kpi-value" id="totalProducts">0</div>
+                    </div>
+                    <div class="kpi-icon"><i class="bi bi-box-seam"></i></div>
                 </div>
-                <div class="kpi-icon">
-                <i class="bi bi-currency-rupee"></i>
-                </div>
-            </div>
             </div>
         </div>
 
-        <!-- Today's Profit (Green) -->
         <div class="col-md-4">
             <div class="card card-kpi kpi-green">
-            <div class="card-body d-flex justify-content-between align-items-center p-3">
-                <div>
-                <div class="kpi-title">Today's Profit</div>
-                <div class="kpi-value" id="todayProfit">₹0.00</div>
+                <div class="card-body d-flex justify-content-between align-items-center p-3">
+                    <div>
+                        <div class="kpi-title">Units in Stock</div>
+                        <div class="kpi-value" id="stockQuantity">0 Pcs</div>
+                    </div>
+                    <div class="kpi-icon"><i class="bi bi-boxes"></i></div>
                 </div>
-                <div class="kpi-icon">
-                <i class="bi bi-graph-up-arrow"></i>
-                </div>
-            </div>
             </div>
         </div>
 
-        <!-- Monthly Sales (Cyan) -->
         <div class="col-md-4">
             <div class="card card-kpi kpi-cyan">
-            <div class="card-body d-flex justify-content-between align-items-center p-3">
-                <div>
-                <div class="kpi-title">Monthly Sales</div>
-                <div class="kpi-value" id="monthlySales">₹0.00</div>
+                <div class="card-body d-flex justify-content-between align-items-center p-3">
+                    <div>
+                        <div class="kpi-title">Stock Cost Value</div>
+                        <div class="kpi-value" id="stockCostValue">₹0.00</div>
+                    </div>
+                    <div class="kpi-icon"><i class="bi bi-cash-stack"></i></div>
                 </div>
-                <div class="kpi-icon">
-                <i class="bi bi-calendar-check"></i>
-                </div>
-            </div>
             </div>
         </div>
-
     </div>
 
-   <!-- 📜 Recent Transactions -->
+<!-- 📜 Recent Transactions -->
     <div class="dashboard-recent-transactions mb-4">
 
         <div class="card border-0 shadow-sm">
@@ -216,64 +205,53 @@
 
     </div>
 
-   <!-- BOTTOM KPI ROW -->
+       <!-- BOTTOM KPI ROW -->
     <div class="row g-3 mb-4">
-  
-        <!-- Today's Bills (Dark Charcoal) -->
-        <div class="col-md-4">
-            <div class="card card-kpi kpi-dark">
-            <div class="card-body d-flex justify-content-between align-items-center p-3">
-                <div>
-                <div class="kpi-title">Today's Bills</div>
-                <div class="kpi-value" id="todayBills">0</div>
-                </div>
-                <div class="kpi-icon">
-                <i class="bi bi-receipt-cutoff"></i>
-                </div>
-            </div>
-            </div>
-        </div>
-
-        <!-- Stock Quantity (Slate Grey) -->
         <div class="col-md-4">
             <div class="card card-kpi kpi-grey">
-            <div class="card-body d-flex justify-content-between align-items-center p-3">
-                <div>
-                <div class="kpi-title">Stock Quantity</div>
-                <div class="kpi-value" id="stockQuantity">0 Pcs</div>
+                <div class="card-body d-flex justify-content-between align-items-center p-3">
+                    <div>
+                        <div class="kpi-title">Today's Sales</div>
+                        <div class="kpi-value" id="todaySales">₹0.00</div>
+                    </div>
+                    <div class="kpi-icon"><i class="bi bi-currency-rupee"></i></div>
                 </div>
-                <div class="kpi-icon">
-                <i class="bi bi-box-seam"></i>
-                </div>
-            </div>
             </div>
         </div>
 
-        <!-- Low Stock Items (Red) -->
+        <div class="col-md-4">
+            <div class="card card-kpi kpi-amber">
+                <div class="card-body d-flex justify-content-between align-items-center p-3">
+                    <div>
+                        <div class="kpi-title">Today's Profit</div>
+                        <div class="kpi-value" id="todayProfit">₹0.00</div>
+                    </div>
+                    <div class="kpi-icon"><i class="bi bi-graph-up-arrow"></i></div>
+                </div>
+            </div>
+        </div>
+
         <div class="col-md-4">
             <div class="card card-kpi kpi-red">
-            <div class="card-body d-flex justify-content-between align-items-center p-3">
-                <div>
-                <div class="kpi-title">Low Stock Items</div>
-                <div class="kpi-value" id="lowStockItems">0</div>
+                <div class="card-body d-flex justify-content-between align-items-center p-3">
+                    <div>
+                        <div class="kpi-title">Low Stock Items</div>
+                        <div class="kpi-value" id="lowStockItems">0</div>
+                    </div>
+                    <div class="kpi-icon"><i class="bi bi-exclamation-triangle"></i></div>
                 </div>
-                <div class="kpi-icon">
-                <i class="bi bi-exclamation-triangle"></i>
-                </div>
-            </div>
             </div>
         </div>
-
     </div>
 
-    <!-- NEW STOCK ADDED CARD -->
+<!-- NEW STOCK ADDED CARD -->
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
             <h6 class="fw-bold m-0 text-dark">
                 <i class="bi bi-plus-circle me-2 text-primary"></i>New Stock Added
             </h6>
             <!-- '+' Icon Button to Add New Product -->
-            <button type="button" id="btnAddStockDashboard" class="btn btn-sm btn-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;" title="Add New Product">
+            <button type="button" id="btnAddStockDashboard" class="btn btn-sm btn-primary rounded-circle d-flex align-items-center justify-content-center btn-add-stock" title="Add New Product">
                 <i class="bi bi-plus-lg"></i>
             </button>
         </div>
@@ -292,7 +270,7 @@
                 <div class="card-header bg-white py-3 fw-bold">
                     <i class="bi bi-graph-up me-2 text-primary"></i>Sales Overview (Last 7 Days)
                 </div>
-                <div class="card-body" style="height: 280px; position: relative;">
+                <div class="card-body chart-card-body">
                     <canvas id="salesOverviewChart"></canvas>
                 </div>
             </div>
@@ -304,7 +282,7 @@
                 <div class="card-header bg-white py-3 fw-bold">
                     <i class="bi bi-pie-chart me-2 text-primary"></i>Sales by Category
                 </div>
-                <div class="card-body d-flex align-items-center justify-content-center" style="height: 280px; position: relative;">
+                <div class="card-body d-flex align-items-center justify-content-center chart-card-body">
                     <canvas id="salesCategoryChart"></canvas>
                 </div>
             </div>
@@ -323,14 +301,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- Custom Application JS -->
-    <script src="./js/app.js"></script>
+    <script src="../Html/js/app.js"></script>
 
-    <script src="./js/config.js"></script>
+    <script src="../Html/js/config.js"></script>
 
-    <script src="./js/responsive.js"></script>
+    <script src="../Html/js/responsive.js"></script>  
 
     <!-- Page Specific JS -->
-    <script src="./js/dashboard.js"></script>
+    <script src="../Html/js/dashboard.js"></script>
 
 </body>
 </html>
