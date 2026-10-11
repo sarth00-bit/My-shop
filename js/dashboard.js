@@ -51,6 +51,55 @@ function updateRefreshBadge() {
     }
 }
 
+
+// ============================================================
+// DATE HELPERS
+// ============================================================
+
+function getLocalDateKey(value) {
+    if (!value) return '';
+
+    const raw = String(value).trim();
+
+    // Already a date-only MySQL value.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+        return raw;
+    }
+
+    // MySQL DATETIME may arrive as:
+    //   YYYY-MM-DD HH:mm:ss
+    // Convert it to an ISO-like string so Chrome parses it consistently
+    // as a local browser date when no timezone is supplied.
+    let normalized = raw;
+
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/.test(normalized)) {
+        normalized = normalized.replace(' ', 'T');
+    }
+
+    const dt = new Date(normalized);
+
+    if (Number.isNaN(dt.getTime())) {
+        return raw.slice(0, 10);
+    }
+
+    const year = dt.getFullYear();
+    const month = String(dt.getMonth() + 1).padStart(2, '0');
+    const day = String(dt.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+}
+
+function getTodayLocalDateKey() {
+    const now = new Date();
+
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+}
+
+
 // =========================================
 // MAIN LOAD
 // =========================================
@@ -113,7 +162,38 @@ async function loadDashboard() {
 
         const analytics = await res.json();
 
-        updateKPICards(analytics);
+        // Keep Dashboard KPI values authoritative from Node.js products/sales.
+        // Flask remains responsible for analytics/charts.
+        const today = getTodayLocalDateKey();
+
+        updateKPICards({
+            total_products: products.length,
+
+            total_stock_quantity: products.reduce(
+                (sum, p) => sum + Number(p.stock_quantity || 0),
+                0
+            ),
+
+            stock_cost_value: products.reduce(
+                (sum, p) =>
+                    sum +
+                    Number(p.purchase_price || 0) *
+                    Number(p.stock_quantity || 0),
+                0
+            ),
+
+            today_sales: salesData
+                .filter(s => getLocalDateKey(s.sale_date) === today)
+                .reduce((sum, s) => sum + Number(s.total_amount || 0), 0),
+
+            today_profit: salesData
+                .filter(s => getLocalDateKey(s.sale_date) === today)
+                .reduce((sum, s) => sum + Number(s.profit_amount || 0), 0),
+
+            low_stock_count: products.filter(p =>
+                Number(p.stock_quantity || 0) <= Number(p.min_stock || 0)
+            ).length
+        });
 
         // IMPORTANT:
         // Flask may return more than 5 sales.
@@ -155,58 +235,64 @@ async function loadDashboard() {
 // FALLBACK KPI CALCULATIONS
 // =========================================
 function buildFallbackKPIs(sales, products) {
-    const today = new Date().toLocaleDateString('en-CA');
-    const monthStart = today.slice(0, 7);
+    const today = getTodayLocalDateKey();
 
-    let todaySales = 0;
-    let todayBills = 0;
-    let monthlySales = 0;
+    const totalProducts = products.length;
 
-    sales.forEach(s => {
-        const d = (s.sale_date || '').slice(0, 10);
-
-        if (d === today) {
-            todaySales += parseFloat(s.total_amount || 0);
-            todayBills++;
-        }
-
-        if (d.startsWith(monthStart)) {
-            monthlySales += parseFloat(s.total_amount || 0);
-        }
-    });
-
-    const totalStock = products.reduce(
-        (n, p) => n + parseInt(p.stock_quantity || 0),
+    const totalStockQuantity = products.reduce(
+        (sum, p) => sum + Number(p.stock_quantity || 0),
         0
     );
 
-    const lowStock = products.filter(
-        p => parseInt(p.stock_quantity || 0) < 10
-    ).length;
+    // Stock Cost Value = purchase_price × current stock_quantity.
+    // Do not estimate cost from selling price or MRP.
+    const stockCostValue = products.reduce(
+        (sum, p) =>
+            sum +
+            Number(p.purchase_price || 0) * Number(p.stock_quantity || 0),
+        0
+    );
+
+    // Low stock uses each product's own min_stock.
+    const lowStock = products.filter(p => {
+        const stock = Number(p.stock_quantity || 0);
+        const minStock = Number(p.min_stock || 0);
+        return stock <= minStock;
+    }).length;
+
+    let todaySales = 0;
+    let todayProfit = 0;
+
+    sales.forEach(s => {
+        const d = getLocalDateKey(s.sale_date);
+
+        if (d === today) {
+            // Sales = final customer amount including GST.
+            todaySales += Number(s.total_amount || 0);
+
+            // Profit = actual stored sale profit.
+            // Never use a fixed percentage estimate.
+            todayProfit += Number(s.profit_amount || 0);
+        }
+    });
 
     updateKPICards({
+        total_products: totalProducts,
+        total_stock_quantity: totalStockQuantity,
+        stock_cost_value: stockCostValue,
         today_sales: todaySales,
-        today_profit: todaySales * 0.30,
-        monthly_sales: monthlySales,
-        today_bills: todayBills,
-        total_stock_quantity: totalStock,
+        today_profit: todayProfit,
         low_stock_count: lowStock
     });
 }
 
 function updateKPICards(data) {
+    setText('totalProducts', data.total_products ?? 0);
+    setText('stockQuantity', `${data.total_stock_quantity ?? 0} Pcs`);
+    setText('stockCostValue', `₹${toFixed2(data.stock_cost_value)}`);
     setText('todaySales', `₹${toFixed2(data.today_sales)}`);
     setText('todayProfit', `₹${toFixed2(data.today_profit)}`);
-    setText('monthlySales', `₹${toFixed2(data.monthly_sales)}`);
-    setText('todayBills', data.today_bills ?? 0);
-    setText(
-        'stockQuantity',
-        `${data.total_stock_quantity ?? 0} Pcs`
-    );
-    setText(
-        'lowStockItems',
-        data.low_stock_count ?? 0
-    );
+    setText('lowStockItems', data.low_stock_count ?? 0);
 }
 
 // =========================================
@@ -232,9 +318,9 @@ function renderRecentTransactions(sales) {
     }
 
     tbody.innerHTML = recentFive.map(sale => {
-        const dt = new Date(sale.sale_date);
+        const dt = new Date(String(sale.sale_date || '').replace(' ', 'T'));
 
-        const dateStr = isNaN(dt)
+        const dateStr = Number.isNaN(dt.getTime())
             ? '—'
             : dt.toLocaleDateString('en-IN', {
                 day: 'numeric',
