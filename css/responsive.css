@@ -1,31 +1,55 @@
 /* ==========================================================================
    responsive.css — MyShop Manager
-   Mobile-first responsive overrides for all pages.
-   Add this AFTER style.css in every HTML page:
-     <link rel="stylesheet" href="./css/responsive.css">
+   Responsive layout for every page. Loaded LAST on every page:
+
+       style.css  →  settings.css (Settings pages only)  →  responsive.css
+
+   Breakpoints (Bootstrap 5):
+       xs  < 576px     phones
+       sm  576–767px   large phones / small tablets
+       md  768–991px   tablets      (sidebar becomes a slide-in overlay below 992px)
+       lg  992–1199px  small desktop
+       xl  >= 1200px   desktop
+
+   The mobile breakpoint (991.98px) must match MOBILE_QUERY in responsive.js.
+
+   TABLE OF CONTENTS
+   --------------------------------------------------------------------------
+    1. Tokens
+    2. Top navbar (single row at every size)
+    3. Sidebar — mobile / tablet overlay
+    4. Shared layout, tables, forms, modals, buttons
+    5. PAGE: Dashboard
+    6. PAGE: Billing (+ payment popup)
+    7. PAGE: Products
+    8. PAGE: Invoices
+    9. PAGE: Report
+   10. PAGE: Settings (all settings-*.html)
+   11. Index / landing page
+   12. Login & signup pages
+   13. Dark mode
+   14. Print
    ========================================================================== */
 
 
 /* ==========================================================================
-   1. ROOT BREAKPOINT TOKENS
+   1. TOKENS
    ========================================================================== */
 :root {
     --sidebar-width: 250px;
-    --sidebar-collapsed-width: 0px;
+    --sidebar-collapsed-width: 0px;   /* "collapsed" = fully hidden */
+    --mobile-sidebar-width: 260px;
     --navbar-height: 56px;
 }
 
 
 /* ==========================================================================
-   2. TOP NAVBAR — SINGLE ROW AT ALL SCREEN SIZES
-   The navbar has this structure inside <nav>:
-     .container-fluid  →  #sidebarToggle  +  .navbar-brand
-     .header-shop-profile  →  #headerAdminName  +  .header-shop-logo-wrap
-   Both are direct children of <nav>, so we make <nav> itself a single
-   flex row and never let it wrap.
+   2. TOP NAVBAR — SINGLE ROW AT EVERY SCREEN SIZE
+   Structure inside <nav>:
+     .container-fluid      →  #sidebarToggle + .navbar-brand
+     .header-shop-profile  →  #headerAdminName + .header-shop-logo-wrap
+   Both are direct children of <nav>, so <nav> itself is a no-wrap flex row.
    ========================================================================== */
-
-/* Force the <nav> itself to be a permanent single-line flex row */
 nav.navbar.fixed-top {
     display: flex !important;
     flex-direction: row !important;
@@ -36,7 +60,7 @@ nav.navbar.fixed-top {
     overflow: hidden !important;
 }
 
-/* .container-fluid holds the hamburger + brand — let it grow but not shrink below its content */
+/* Hamburger + brand: grow, but never push the profile off-screen */
 nav.navbar.fixed-top > .container-fluid {
     display: flex !important;
     flex-direction: row !important;
@@ -47,24 +71,24 @@ nav.navbar.fixed-top > .container-fluid {
     padding: 0 !important;
 }
 
-/* Hamburger toggle — fixed size, never shrinks */
-nav.navbar.fixed-top > .container-fluid > #sidebarToggle {
+nav.navbar.fixed-top > .container-fluid > #sidebarToggle,
+nav.navbar.fixed-top > .container-fluid > #btnToggleSidebar {
     flex: 0 0 auto !important;
     margin-right: 0.5rem !important;
 }
 
-/* Brand "MyShop Manager" — truncates with ellipsis if really tight */
+/* Brand truncates with an ellipsis if space is really tight */
 nav.navbar.fixed-top > .container-fluid > .navbar-brand {
     flex: 0 1 auto !important;
     min-width: 0 !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
     margin-right: 0 !important;
+    overflow: hidden !important;
     font-size: 1.05rem !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
 }
 
-/* Profile area — fixed to the right, never wraps or overflows downward */
+/* Admin name + shop logo — pinned to the right */
 nav.navbar.fixed-top > .header-shop-profile,
 .header-shop-profile {
     display: flex !important;
@@ -78,33 +102,33 @@ nav.navbar.fixed-top > .header-shop-profile,
     min-width: 0 !important;
 }
 
-/* Admin name — always visible, truncates gracefully */
 .header-admin-name {
-    display: block !important;        /* override the previous "display:none" */
+    display: block !important;
+    max-width: 140px !important;
+    overflow: hidden !important;
     color: #ffffff !important;
     font-size: 13px !important;
     font-weight: 600 !important;
     white-space: nowrap !important;
-    overflow: hidden !important;
     text-overflow: ellipsis !important;
-    max-width: 140px !important;
 }
 
-/* Logo wrap — consistent size at all breakpoints */
 .header-shop-logo-wrap {
-    width: 38px !important;
-    height: 38px !important;
-    min-width: 38px !important;
-    flex-shrink: 0 !important;
-    border-radius: 8px !important;
-    overflow: hidden !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    background: rgba(255,255,255,0.12) !important;
-    border: 1px solid rgba(255,255,255,0.35) !important;
+    flex-shrink: 0 !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    overflow: hidden !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.35) !important;
+    border-radius: 8px !important;
 }
 
+/* NOTE: display is intentionally NOT set here — app.js shows/hides the logo
+   and the fallback icon with inline display values. */
 .header-shop-logo {
     width: 100% !important;
     height: 100% !important;
@@ -117,14 +141,14 @@ nav.navbar.fixed-top > .header-shop-profile,
     font-size: 19px !important;
 }
 
-/* On very small phones (< 360px) hide the admin text but keep the logo */
+/* Very small phones: logo only */
 @media (max-width: 359px) {
     .header-admin-name {
         display: none !important;
     }
 }
 
-/* Tablet / mid range — allow a bit more name width */
+/* Tablet and up: a little more room */
 @media (min-width: 576px) {
     .header-admin-name {
         max-width: 180px !important;
@@ -140,13 +164,12 @@ nav.navbar.fixed-top > .header-shop-profile,
 
 
 /* ==========================================================================
-   3. SIDEBAR — MOBILE OVERLAY BEHAVIOUR
-   On screens ≤ 991px the sidebar slides in as a full-height overlay
-   so it never squashes the main content column.
+   3. SIDEBAR — SLIDE-IN OVERLAY BELOW 992px
+   JS (responsive.js) adds body.sidebar-open to show it.
    ========================================================================== */
 @media (max-width: 991.98px) {
 
-    /* Default state: sidebar hidden off-screen to the left */
+    /* Closed (default): parked off-screen, not focusable */
     #sidebarMenu,
     #sidebar,
     .sidebar {
@@ -154,30 +177,87 @@ nav.navbar.fixed-top > .header-shop-profile,
         top: var(--navbar-height) !important;
         left: 0 !important;
         height: calc(100vh - var(--navbar-height)) !important;
-        width: 260px !important;
-        min-width: 260px !important;
+        height: calc(100dvh - var(--navbar-height)) !important;
+        width: var(--mobile-sidebar-width) !important;
+        min-width: var(--mobile-sidebar-width) !important;
+        min-height: 0 !important;
         z-index: 1050 !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        overscroll-behavior: contain;
+        border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
         transform: translateX(-100%) !important;
-        transition: transform 0.25s ease !important;
+        visibility: hidden;
+        transition: transform 0.25s ease, visibility 0s linear 0.25s !important;
+    }
+
+    /* The desktop "collapsed" states must never shrink the overlay.
+       Covers body.sidebar-collapsed (hamburger / Settings → Appearance) and
+       the .collapsed class that settings.js adds to #sidebarMenu. */
+    body.sidebar-collapsed #sidebarMenu,
+    body.sidebar-collapsed #sidebar,
+    body.sidebar-collapsed .sidebar,
+    #sidebarMenu.collapsed,
+    #sidebar.collapsed,
+    .sidebar.collapsed {
+        flex: 0 0 auto !important;
+        width: var(--mobile-sidebar-width) !important;
+        min-width: var(--mobile-sidebar-width) !important;
+        max-width: none !important;
+        padding: 1rem !important;
+        opacity: 1 !important;
+        overflow-x: hidden !important;
         overflow-y: auto !important;
         border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
     }
 
-    /* Visible state: toggled via JS adding .sidebar-open to <body> */
+    /* Restore the children hidden by the desktop collapsed rule */
+    body.sidebar-collapsed #sidebarMenu > ul,
+    body.sidebar-collapsed #sidebar > ul,
+    body.sidebar-collapsed .sidebar > ul,
+    body.sidebar-collapsed #sidebarMenu > div,
+    body.sidebar-collapsed #sidebar > div,
+    body.sidebar-collapsed .sidebar > div {
+        display: flex !important;
+    }
+
+    body.sidebar-collapsed #sidebarMenu > hr,
+    body.sidebar-collapsed #sidebar > hr,
+    body.sidebar-collapsed .sidebar > hr {
+        display: block !important;
+    }
+
+    /* Undo the icon-only link layout from the .collapsed strip */
+    #sidebarMenu.collapsed .nav-link,
+    #sidebar.collapsed .nav-link,
+    .sidebar.collapsed .nav-link {
+        justify-content: flex-start;
+        padding: 0.85rem 1rem;
+    }
+
+    #sidebarMenu.collapsed .nav-link i,
+    #sidebar.collapsed .nav-link i,
+    .sidebar.collapsed .nav-link i {
+        margin-right: 8px;
+    }
+
+    /* Open */
     body.sidebar-open #sidebarMenu,
     body.sidebar-open #sidebar,
     body.sidebar-open .sidebar {
         transform: translateX(0) !important;
+        visibility: visible;
         box-shadow: 4px 0 24px rgba(0, 0, 0, 0.35) !important;
+        transition: transform 0.25s ease, visibility 0s linear 0s !important;
     }
 
-    /* Semi-transparent backdrop behind the open sidebar */
+    /* Dimmed backdrop; a tap on it closes the sidebar (responsive.js) */
     body.sidebar-open::before {
         content: '';
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.45);
         z-index: 1045;
+        background: rgba(0, 0, 0, 0.45);
         animation: fadeInBackdrop 0.2s ease forwards;
     }
 
@@ -186,7 +266,13 @@ nav.navbar.fixed-top > .header-shop-profile,
         to   { opacity: 1; }
     }
 
-    /* Main content always uses full width on mobile */
+    /* Page behind the overlay does not scroll while it is open.
+       (Done in CSS so it can never clash with Bootstrap's modal scroll lock.) */
+    body.sidebar-open {
+        overflow: hidden !important;
+    }
+
+    /* Main content always uses the full width */
     #wrapper {
         flex-direction: column !important;
     }
@@ -196,40 +282,166 @@ nav.navbar.fixed-top > .header-shop-profile,
     .report-main-content {
         width: 100% !important;
         min-width: 0 !important;
+        max-width: none !important;
+        margin-left: 0 !important;
         padding: 1rem !important;
-    }
-
-    /* Cancel the desktop collapsed-sidebar rules on mobile */
-    body.sidebar-collapsed #sidebarMenu,
-    body.sidebar-collapsed #sidebar,
-    body.sidebar-collapsed .sidebar {
-        width: 260px !important;
-        min-width: 260px !important;
-        transform: translateX(-100%) !important;
-        opacity: 1 !important;
-        padding: initial !important;
-        overflow: hidden auto !important;
-    }
-
-    body.sidebar-collapsed #sidebarMenu > *,
-    body.sidebar-collapsed #sidebar > *,
-    body.sidebar-collapsed .sidebar > * {
-        display: flex !important;
     }
 }
 
 
 /* ==========================================================================
-   4. DASHBOARD PAGE
+   4. SHARED LAYOUT, TABLES, FORMS, MODALS, BUTTONS
    ========================================================================== */
 
-/* KPI cards: 1 per row on phones, 2 on small tablets, 3 on ≥ md */
-@media (max-width: 575.98px) {
+/* ---- Card grids built from .row.g-3 > col-md-* -------------------------- */
+/* Bootstrap stacks col-md-* below 768px; these rules give a denser grid. */
 
-    .card-kpi {
-        margin-bottom: 0.75rem;
+/* col-md-4 (Dashboard KPIs, product form fields): 2 per row on large phones */
+@media (min-width: 576px) and (max-width: 767.98px) {
+    .row.g-3 > [class*="col-md-4"] {
+        width: 50% !important;
+    }
+}
+
+/* col-md-3 (Products stat cards, Report KPI cards): 2 per row up to 991px */
+@media (max-width: 991.98px) {
+    .row.g-3 > [class*="col-md-3"] {
+        width: 50% !important;
+    }
+}
+
+/* ...and 1 per row on phones (Products stat cards override this in section 7) */
+@media (max-width: 575.98px) {
+    .row.g-3 > [class*="col-md-3"] {
+        width: 100% !important;
+    }
+}
+
+/* ---- Page header rows (title + actions) --------------------------------- */
+@media (max-width: 575.98px) {
+    .d-flex.align-items-center.justify-content-between.mb-4 {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.5rem !important;
     }
 
+    h2.fw-bold,
+    h3.fw-bold {
+        font-size: 1.15rem !important;
+    }
+}
+
+/* ---- Tables -------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    .table-responsive {
+        border-radius: 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table td,
+    .table th {
+        padding: 0.6rem 0.75rem !important;
+    }
+
+    /* Keep rows on one line and let the table scroll sideways
+       (the billing cart is excluded: its rows may wrap) */
+    .table-responsive > .table:not(:has(#cartTableBody)) th,
+    .table-responsive > .table:not(:has(#cartTableBody)) td {
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .table-responsive > .table:has(#cartTableBody) {
+        min-width: 460px;
+    }
+}
+
+/* ---- Forms: bigger touch targets, no iOS zoom ---------------------------- */
+@media (max-width: 767.98px) {
+    .form-control,
+    .form-select,
+    .input-group .form-control {
+        min-height: 44px !important;
+        font-size: 16px !important;
+    }
+
+    /* Inputs that live inside table rows stay compact */
+    .table .form-control-sm,
+    .table .form-select-sm {
+        min-height: 36px !important;
+    }
+
+    .form-label {
+        font-size: 0.875rem !important;
+    }
+
+    .btn-sm {
+        padding: 0.3rem 0.55rem !important;
+        font-size: 0.8rem !important;
+    }
+
+    .card-body .btn {
+        min-height: 40px;
+    }
+}
+
+/* ---- Modals -------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    .modal-dialog,
+    .modal-dialog.modal-lg,
+    .modal-dialog.modal-xl {
+        margin: 0.5rem !important;
+        max-width: calc(100vw - 1rem) !important;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .modal-footer {
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+    }
+
+    .modal-footer .btn {
+        width: 100% !important;
+    }
+}
+
+/* ---- Badges -------------------------------------------------------------- */
+@media (max-width: 575.98px) {
+    .badge {
+        font-size: 0.7rem !important;
+        padding: 0.25em 0.5em !important;
+    }
+}
+
+/* ---- Minimum tap targets on touch-sized screens -------------------------- */
+@media (max-width: 991.98px) {
+    .nav-link,
+    .btn:not(.btn-sm):not(.btn-close) {
+        min-height: 40px;
+    }
+
+    #sidebarMenu .nav-link,
+    #sidebar .nav-link {
+        padding: 0.85rem 1rem !important;
+    }
+
+    /* Round / icon-only buttons keep their own square size
+       (placed last so they win over the generic rules above) */
+    .btn-add-stock,
+    .product-card .btn,
+    .btn.rounded-circle {
+        min-height: 0 !important;
+    }
+}
+
+
+/* ==========================================================================
+   5. PAGE: DASHBOARD
+   ========================================================================== */
+@media (max-width: 575.98px) {
     .card-kpi .kpi-value {
         font-size: 1.4rem !important;
     }
@@ -237,196 +449,179 @@ nav.navbar.fixed-top > .header-shop-profile,
     .card-kpi .kpi-icon {
         font-size: 1.8rem !important;
     }
-
-    /* Charts stack vertically */
-    .col-md-7,
-    .col-md-5 {
-        width: 100% !important;
-    }
-
-    /* Recent transactions table: allow horizontal scroll */
-    .dashboard-recent-transactions .table-responsive {
-        -webkit-overflow-scrolling: touch;
-    }
-
-    /* Page heading */
-    h2.fw-bold {
-        font-size: 1.15rem !important;
-    }
-
-    /* Refresh badge area wraps cleanly */
-    .d-flex.align-items-center.justify-content-between.mb-4 {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 0.5rem !important;
-    }
 }
 
-@media (min-width: 576px) and (max-width: 767.98px) {
-
-    /* 2-column KPI grid on small tablets */
-    .row.g-3 > [class*="col-md-4"] {
-        width: 50% !important;
-    }
-}
-
-/* Chart canvas height: shorter on mobile so it doesn't eat the screen */
+/* Chart containers: shorter on small screens so they don't eat the screen */
 @media (max-width: 767.98px) {
-
-    .card-body[style*="height: 280px"] {
+    .chart-card-body {
         height: 220px !important;
     }
 }
 
 
 /* ==========================================================================
-   5. BILLING PAGE
+   6. PAGE: BILLING
    ========================================================================== */
-@media (max-width: 991.98px) {
 
-    /* Product grid and cart stack vertically */
-    .billing-left,
-    .billing-right,
-    [class*="col-lg-8"],
-    [class*="col-lg-4"] {
-        width: 100% !important;
+/* Payment summary stays in view while scrolling the product list (desktop) */
+@media (min-width: 992px) {
+    .sticky-payment-panel {
+        position: sticky;
+        top: calc(var(--navbar-height) + 1rem);
+        max-height: calc(100vh - var(--navbar-height) - 2rem);
+        overflow-y: auto;
+        scrollbar-width: thin;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .sticky-payment-panel {
+        position: static;
     }
 
-    /* Category pills: horizontal scroll row */
-    .category-pills-row,
-    .d-flex.flex-wrap.gap-2 {
+    /* Category pills: one scrollable row */
+    #categoryPills,
+    .category-pills-row {
         flex-wrap: nowrap !important;
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch;
-        padding-bottom: 4px;
         scrollbar-width: none;
     }
 
-    .category-pills-row::-webkit-scrollbar,
-    .d-flex.flex-wrap.gap-2::-webkit-scrollbar {
+    #categoryPills::-webkit-scrollbar,
+    .category-pills-row::-webkit-scrollbar {
         display: none;
     }
 
     .category-pill {
-        white-space: nowrap !important;
         flex-shrink: 0 !important;
+        white-space: nowrap !important;
     }
+}
 
-    /* Product cards: 2 per row on tablet */
-    .col-sm-6.col-md-4.col-xl-3 {
+/* Product cards: 2 per row on tablets (768–991) */
+@media (min-width: 768px) and (max-width: 991.98px) {
+    #productGrid > [class*="col-"] {
         width: 50% !important;
     }
 }
 
+/* Small desktop with the sidebar open: the grid column is narrow → 2 per row */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    #productGrid > [class*="col-md-4"] {
+        width: 50% !important;
+    }
+}
+
+/* Payment popup: bottom sheet on phones */
 @media (max-width: 575.98px) {
-
-    /* Product cards: 1 per row on phone */
-    .col-sm-6.col-md-4.col-xl-3 {
-        width: 100% !important;
+    #paymentOverlay {
+        align-items: flex-end;
+        padding: 0 !important;
     }
 
-    /* Cart table horizontal scroll */
-    #cartTableBody,
-    .cart-table-wrapper {
-        display: block;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+    .pay-modal {
+        max-width: 100%;
+        max-height: 94vh;
+        max-height: 94dvh;
+        border-radius: 18px 18px 0 0;
     }
 
-    /* Payment overlay: full-screen on mobile */
-    #paymentOverlay,
-    .payment-overlay {
-        padding: 1rem !important;
+    .pay-input {
+        font-size: 16px !important; /* prevents iOS zoom on focus */
     }
 }
 
 
 /* ==========================================================================
-   6. PRODUCTS PAGE
+   7. PAGE: PRODUCTS
    ========================================================================== */
-@media (max-width: 767.98px) {
 
-    /* Products table: horizontal scroll */
-    .table-responsive {
-        -webkit-overflow-scrolling: touch;
+/* Coloured stat cards: stay 2 x 2 on phones (compact) */
+@media (max-width: 575.98px) {
+    .row.g-3 > [class*="col-md-3"]:has(> .product-stat) {
+        width: 50% !important;
     }
 
-    /* Action buttons in table: icon-only on tight screens */
-    .btn.btn-sm.btn-outline-primary,
-    .btn.btn-sm.btn-outline-danger {
-        padding: 0.25rem 0.4rem !important;
+    .product-stat .card-body {
+        padding: 0.75rem;
     }
 
-    /* Search + filter row: stack vertically */
-    .row.g-3 > .col-md-6 {
-        width: 100% !important;
+    .product-stat .card-body :is(h3, h4, h5) {
+        font-size: 1.1rem;
     }
+}
 
-    /* Modal: full-width on small screens */
-    .modal-dialog {
-        margin: 0.5rem !important;
-        max-width: calc(100vw - 1rem) !important;
+/* Filter row: the three dropdowns share one line on tablets */
+@media (min-width: 576px) and (max-width: 991.98px) {
+    .row > .col-lg-2:has(> .form-select) {
+        width: 33.3333% !important;
     }
+}
 
-    .modal-dialog.modal-lg {
-        max-width: calc(100vw - 1rem) !important;
+/* Add / edit product modal */
+@media (max-width: 575.98px) {
+    .modal-body {
+        padding: 1rem;
     }
 }
 
 
 /* ==========================================================================
-   7. INVOICES PAGE
+   8. PAGE: INVOICES
+   Column hiding is limited to the invoice list (#invoicesTableBody) so other
+   tables keep all their columns and scroll sideways instead.
    ========================================================================== */
 @media (max-width: 767.98px) {
-
-    /* Hide less-critical columns on phones */
-    .table thead tr th:nth-child(4),
-    .table tbody tr td:nth-child(4) {
+    /* Hide "Contact" on phones */
+    .table:has(#invoicesTableBody) > thead > tr > th:nth-child(4),
+    #invoicesTableBody > tr > td:nth-child(4) {
         display: none !important;
     }
 
-    /* Invoice detail modal full-screen */
-    #invoiceDetailModal .modal-dialog {
-        margin: 0.4rem !important;
-        max-width: calc(100vw - 0.8rem) !important;
+    #invoiceDetailModal .modal-body {
+        padding: 1rem;
+        overflow-x: auto;
     }
 
-    /* Print button */
     #btnPrintInvoice {
         width: 100% !important;
-        margin-top: 0.5rem;
     }
 }
 
 @media (max-width: 575.98px) {
-
-    /* Also hide Date column on very small phones */
-    .table thead tr th:nth-child(2),
-    .table tbody tr td:nth-child(2) {
+    /* Also hide "Date & Time" on very small phones */
+    .table:has(#invoicesTableBody) > thead > tr > th:nth-child(2),
+    #invoicesTableBody > tr > td:nth-child(2) {
         display: none !important;
     }
 
-    /* Truncate customer names */
-    .table td.fw-semibold {
+    /* Long customer names are truncated */
+    #invoicesTableBody td.fw-semibold {
         max-width: 120px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
+
+    /* Item table inside the invoice modal scrolls instead of squeezing */
+    #invoiceDetailModal .table {
+        min-width: 520px;
+    }
+
+    /* Store details and invoice number wrap onto two lines */
+    #invoiceDetailModal .d-flex.justify-content-between.align-items-start {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
 }
 
 
 /* ==========================================================================
-   8. REPORT PAGE
+   9. PAGE: REPORT
    ========================================================================== */
 @media (max-width: 991.98px) {
-
-    /* Report KPI cards: 2 per row */
-    .row.g-3 > [class*="col-md-3"] {
-        width: 50% !important;
-    }
-
-    /* Report tabs: scrollable horizontal row */
+    /* Tabs: one horizontally scrollable row */
     .report-tabs,
     .nav.nav-tabs {
         flex-wrap: nowrap !important;
@@ -444,18 +639,12 @@ nav.navbar.fixed-top > .header-shop-profile,
 
     .report-tabs .nav-link,
     .nav.nav-tabs .nav-link {
-        white-space: nowrap !important;
         flex-shrink: 0 !important;
+        white-space: nowrap !important;
     }
 
-    /* Filter row: stack */
-    .row.g-2 > [class*="col-md"] {
-        width: 100% !important;
-    }
-
-    /* Export buttons: full-width row */
-    .btn-group,
-    .d-flex.gap-2 {
+    /* Export buttons wrap instead of overflowing */
+    .btn-group {
         flex-wrap: wrap !important;
     }
 
@@ -464,47 +653,76 @@ nav.navbar.fixed-top > .header-shop-profile,
     }
 }
 
+/* Filter form (six fields): 3 per row on tablets, 2 per row on phones */
+@media (min-width: 576px) and (max-width: 991.98px) {
+    #filterForm > [class*="col-md-"] {
+        width: 33.3333% !important;
+    }
+}
+
 @media (max-width: 575.98px) {
-
-    /* Report KPI: 1 per row */
-    .row.g-3 > [class*="col-md-3"] {
-        width: 100% !important;
+    #filterForm > [class*="col-md-"] {
+        width: 50% !important;
     }
 
-    /* Charts in report: full width */
-    .col-md-6,
-    .col-md-8,
-    .col-md-4 {
-        width: 100% !important;
+    .report-main-content canvas {
+        max-width: 100%;
     }
 }
 
 
 /* ==========================================================================
-   9. SETTINGS PAGE
+   10. PAGE: SETTINGS (Settings.html + settings-*.html)
+   Layout rules for the settings cards, grids and tabs live in settings.css.
+   This section only adds what needs the mobile sidebar/touch rules.
    ========================================================================== */
 @media (max-width: 767.98px) {
-
-    /* Settings card columns: full width */
-    .col-md-6,
-    .col-lg-4,
-    .col-lg-8 {
-        width: 100% !important;
+    .settings-page-title h2 {
+        font-size: 20px;
     }
 
-    /* Logo preview box */
-    .logo-preview-box {
-        width: 100% !important;
-        height: 100px !important;
+    .section-toolbar,
+    .settings-block {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .private-banner,
+    .settings-note {
+        margin: 10px 12px;
+    }
+
+    /* Bigger switches and tick boxes for touch */
+    .setting-switch input[type="checkbox"] {
+        width: 22px;
+        height: 22px;
+    }
+
+    .check-grid input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .private-page-lock {
+        padding: 36px 16px;
+    }
+
+    .qr-preview-box {
+        min-height: 150px;
+    }
+
+    .settings-tab {
+        min-height: 44px;
     }
 }
 
 
 /* ==========================================================================
-   10. INDEX / LANDING PAGE
+   11. INDEX / LANDING PAGE
    ========================================================================== */
 @media (max-width: 767.98px) {
-
     .hero {
         padding: 50px 5% !important;
         gap: 40px !important;
@@ -520,7 +738,6 @@ nav.navbar.fixed-top > .header-shop-profile,
 }
 
 @media (max-width: 575.98px) {
-
     .hero h1 {
         font-size: 2.2rem !important;
         letter-spacing: -1px !important;
@@ -537,15 +754,14 @@ nav.navbar.fixed-top > .header-shop-profile,
 
 
 /* ==========================================================================
-   11. LOGIN & SIGNUP PAGES
+   12. LOGIN & SIGNUP PAGES
    ========================================================================== */
 @media (max-width: 480px) {
-
     .login-card,
     .signup-card {
+        margin: 0.5rem !important;
         padding: 24px 16px !important;
         border-radius: 12px !important;
-        margin: 0.5rem !important;
     }
 
     .login-header h1,
@@ -568,85 +784,7 @@ nav.navbar.fixed-top > .header-shop-profile,
 
 
 /* ==========================================================================
-   12. GLOBAL TABLE IMPROVEMENTS FOR TOUCH
-   ========================================================================== */
-@media (max-width: 767.98px) {
-
-    .table-responsive {
-        border-radius: 8px;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .table td,
-    .table th {
-        padding: 0.6rem 0.75rem !important;
-    }
-
-    .btn-sm {
-        padding: 0.3rem 0.55rem !important;
-        font-size: 0.8rem !important;
-    }
-}
-
-
-/* ==========================================================================
-   13. MODAL IMPROVEMENTS FOR MOBILE
-   ========================================================================== */
-@media (max-width: 575.98px) {
-
-    .modal-dialog {
-        margin: 0.5rem !important;
-        max-width: calc(100vw - 1rem) !important;
-    }
-
-    .modal-footer {
-        flex-direction: column !important;
-        gap: 0.5rem !important;
-    }
-
-    .modal-footer .btn {
-        width: 100% !important;
-    }
-}
-
-
-/* ==========================================================================
-   14. FORM CONTROLS — LARGER TOUCH TARGETS
-   ========================================================================== */
-@media (max-width: 767.98px) {
-
-    .form-control,
-    .form-select,
-    .input-group .form-control {
-        font-size: 16px !important; /* prevents iOS zoom on focus */
-        min-height: 44px !important;
-    }
-
-    .form-label {
-        font-size: 0.875rem !important;
-    }
-
-    .card-body .btn {
-        min-height: 40px;
-    }
-}
-
-
-/* ==========================================================================
-   15. BADGE & CHIP WRAPPING
-   ========================================================================== */
-@media (max-width: 575.98px) {
-
-    .badge {
-        font-size: 0.7rem !important;
-        padding: 0.25em 0.5em !important;
-    }
-}
-
-
-/* ==========================================================================
-   16. DARK MODE — MOBILE BACKDROP FIX
+   13. DARK MODE
    ========================================================================== */
 body.dark-mode.sidebar-open::before,
 [data-bs-theme="dark"] body.sidebar-open::before {
@@ -655,42 +793,35 @@ body.dark-mode.sidebar-open::before,
 
 
 /* ==========================================================================
-   17. PRINT
+   14. PRINT
    ========================================================================== */
 @media print {
-
     #sidebarMenu,
     #sidebar,
     .sidebar,
-    nav.navbar.fixed-top {
+    nav.navbar.fixed-top,
+    #paymentOverlay,
+    .settings-toast {
+        display: none !important;
+    }
+
+    body.sidebar-open::before {
         display: none !important;
     }
 
     body {
         padding-top: 0 !important;
+        overflow: visible !important;
     }
 
-    #wrapper > main {
+    #wrapper {
+        display: block !important;
+    }
+
+    #wrapper > main,
+    .report-main-content {
         width: 100% !important;
+        margin: 0 !important;
         padding: 0 !important;
-    }
-}
-
-
-/* ==========================================================================
-   18. UTILITY: MINIMUM TAP TARGET
-   ========================================================================== */
-@media (max-width: 991.98px) {
-
-    .nav-link,
-    .btn,
-    a.btn,
-    button {
-        min-height: 40px;
-    }
-
-    #sidebarMenu .nav-link,
-    #sidebar .nav-link {
-        padding: 0.85rem 1rem !important;
     }
 }
