@@ -42,6 +42,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         return isNaN(n) ? '0.00' : n.toFixed(2);
     }
 
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, ch => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[ch]);
+    }
+
     function fmtDate(isoStr) {
         if (!isoStr) return '—';
         const dt = new Date(isoStr);
@@ -63,9 +69,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!salesRes.ok)    throw new Error(`Sales API error (${salesRes.status})`);
             if (!productsRes.ok) throw new Error(`Products API error (${productsRes.status})`);
 
+            // Read Node responses normally. The Flask analytics endpoint can
+            // return Python NaN/Infinity values, which are NOT valid JSON for
+            // the browser's Response.json(). Parse that response safely so a
+            // bad analytics row cannot break the entire Reports page.
             allSales    = await salesRes.json();
             allProducts = await productsRes.json();
-            perfData    = perfRes.ok ? await perfRes.json() : [];
+            perfData    = perfRes.ok ? await readAnalyticsJson(perfRes) : [];
 
             populateCategoryFilter();
             renderReports();
@@ -75,14 +85,37 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    async function readAnalyticsJson(response) {
+        try {
+            const text = await response.text();
+            if (!text || !text.trim()) return [];
+
+            // Python's JSON encoder may emit NaN/Infinity. Convert those
+            // non-standard numeric tokens to JSON null before parsing.
+            const safeText = text
+                .replace(/\bNaN\b/g, 'null')
+                .replace(/\bInfinity\b/g, 'null')
+                .replace(/\b-Infinity\b/g, 'null');
+
+            const parsed = JSON.parse(safeText);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (err) {
+            console.warn('Product analytics data could not be parsed. Reports will continue without it:', err);
+            return [];
+        }
+    }
+
     // ── 2. CATEGORY DROPDOWN ──────────────────────────────────────────────────
     function populateCategoryFilter() {
         if (!filterCategory) return;
-        const cats = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
+
+        const categories = ['Electronic', 'General', 'Accessories', 'Apparel'];
         filterCategory.innerHTML = '<option value="all">All Categories</option>';
-        cats.forEach(cat => {
+
+        categories.forEach(category => {
             const opt = document.createElement('option');
-            opt.value = cat; opt.textContent = cat;
+            opt.value = category;
+            opt.textContent = category;
             filterCategory.appendChild(opt);
         });
     }
@@ -92,6 +125,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const start     = filterStartDate?.value ? new Date(filterStartDate.value + 'T00:00:00') : null;
         const end       = filterEndDate?.value   ? new Date(filterEndDate.value   + 'T23:59:59') : null;
         const payMethod = filterPayment?.value   || 'all';
+        const category  = filterCategory?.value  || 'all';
         const custQuery = (filterCustomer?.value || '').toLowerCase().trim();
 
         return allSales.filter(s => {
@@ -100,6 +134,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (end   && dt > end)   return false;
             if (payMethod !== 'all' && (s.payment_method || '').toLowerCase() !== payMethod.toLowerCase()) return false;
             if (custQuery && !(s.customer_name || '').toLowerCase().includes(custQuery)) return false;
+
+            // Category filtering is handled from stored sale items when available.
+            // For the sales summary, if no item/category snapshot is available,
+            // keep the sale rather than inventing a category.
+            if (category !== 'all' && Array.isArray(s.items) && s.items.length) {
+                const hasCategory = s.items.some(item =>
+                    String(item.category || '').toLowerCase() === category.toLowerCase()
+                );
+                if (!hasCategory) return false;
+            }
+
             return true;
         });
     }
@@ -115,14 +160,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function renderKPIs(filtered) {
-        let revenue = 0, cost = 0, discount = 0;
+        let revenue = 0, cost = 0, discount = 0, taxableSales = 0, gst = 0;
+
         filtered.forEach(s => {
-            revenue  += parseFloat(s.total_amount || 0);
-            discount += parseFloat(s.discount     || 0);
-            cost     += parseFloat(s.cost_amount  || 0) || (parseFloat(s.total_amount || 0) * 0.70);
+            // total_amount = final GST-inclusive amount paid by customer.
+            revenue  += Number(s.total_amount || 0);
+
+            // subtotal_amount = GST-exclusive taxable sales value after discount.
+            taxableSales += Number(s.subtotal_amount ?? s.subtotal ?? 0);
+
+            gst += Number(s.tax_amount || 0);
+            discount += Number(s.discount || 0);
+
+            // cost_amount = actual purchase cost, not an estimate.
+            cost += Number(s.cost_amount || 0);
         });
-        const profit = revenue - cost;
-        const margin = revenue > 0 ? ((profit / revenue) * 100) : 0;
+
+        const profit = filtered.reduce((sum, s) => {
+            const storedProfit = Number(s.profit_amount);
+            if (Number.isFinite(storedProfit)) return sum + storedProfit;
+
+            // New invoices should always contain profit_amount.
+            // This fallback uses taxable sales - purchase cost, never GST-inclusive
+            // revenue - purchase cost.
+            return sum +
+                Number(s.subtotal_amount ?? s.subtotal ?? 0) -
+                Number(s.cost_amount || 0);
+        }, 0);
+
+        // Margin is profit over GST-exclusive taxable sales.
+        const margin = taxableSales > 0 ? ((profit / taxableSales) * 100) : 0;
 
         setKPI(kpiRevenue,    `₹${fmt(revenue)}`);
         setKPI(kpiCost,       `₹${fmt(cost)}`);
@@ -140,8 +207,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         salesTbody.innerHTML = filtered.map(s => {
             const revenue  = parseFloat(s.total_amount || 0);
-            const cost     = parseFloat(s.cost_amount  || 0) || (revenue * 0.70);
-            const profit   = revenue - cost;
+            const cost     = Number.isFinite(parseFloat(s.cost_amount)) ? parseFloat(s.cost_amount) : 0;
+            const storedProfit = parseFloat(s.profit_amount);
+            const profit   = Number.isFinite(storedProfit) ? storedProfit : (revenue - cost);
             const itemsCnt = parseInt(s.items_count   || 0);
             return `
                 <tr>
@@ -159,34 +227,52 @@ document.addEventListener('DOMContentLoaded', async () => {
     function renderProductTab() {
         if (!productTbody) return;
 
-        // Merge perfData with allProducts for stock info
         const map = {};
+
         allProducts.forEach(p => {
             map[p.id] = {
-                id: p.id, name: p.name, sku: p.brand || '—',
+                id: p.id,
+                name: p.name || 'Unnamed Product',
+                sku: p.sku || `SKU-${p.id}`,
                 category: p.category || 'General',
-                stock: parseInt(p.stock_quantity || 0, 10),
-                qty_sold: 0, revenue: 0
+                purchasePrice: Number(p.purchase_price || 0),
+                sellingPrice: Number(p.selling_price || 0),
+                stock: Math.max(0, parseInt(p.stock_quantity || 0, 10) || 0),
+                minStock: Math.max(0, parseInt(p.min_stock || 0, 10) || 0),
+                qty_sold: 0,
+                revenue: 0
             };
         });
+
+        // Product analytics is optional. Reports remains fully usable if the
+        // Flask analytics endpoint is unavailable or contains invalid values.
         perfData.forEach(p => {
-            if (map[p.product_id]) {
-                map[p.product_id].qty_sold = p.qty_sold || 0;
-                map[p.product_id].revenue  = parseFloat(p.revenue || 0);
-            }
+            if (!map[p.product_id]) return;
+
+            const qty = Number(p.qty_sold);
+            const revenue = Number(p.revenue);
+
+            map[p.product_id].qty_sold = Number.isFinite(qty) ? qty : 0;
+            map[p.product_id].revenue = Number.isFinite(revenue) ? revenue : 0;
         });
 
         const list = Object.values(map).sort((a, b) => b.revenue - a.revenue);
 
         if (!list.length) {
-            productTbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No product data found.</td></tr>';
+            productTbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No product data found.</td></tr>';
             return;
         }
 
         productTbody.innerHTML = list.map(p => {
             let badge = '<span class="badge bg-success">In Stock</span>';
-            if (p.stock === 0)   badge = '<span class="badge bg-danger">Out of Stock</span>';
-            else if (p.stock < 10) badge = '<span class="badge bg-warning text-dark">Low Stock</span>';
+            if (p.stock === 0) {
+                badge = '<span class="badge bg-danger">Out of Stock</span>';
+            } else if (p.stock <= p.minStock) {
+                badge = '<span class="badge bg-warning text-dark">Low Stock</span>';
+            }
+
+            const stockCost = p.purchasePrice * p.stock;
+
             return `
                 <tr>
                     <td>
@@ -196,6 +282,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <td><span class="badge bg-light text-dark border">${p.category}</span></td>
                     <td class="fw-bold">${p.qty_sold}</td>
                     <td class="fw-bold text-primary">₹${fmt(p.revenue)}</td>
+                    <td>₹${fmt(p.purchasePrice)}</td>
+                    <td>₹${fmt(stockCost)}</td>
                     <td>${p.stock}</td>
                     <td>${badge}</td>
                 </tr>`;
@@ -229,35 +317,56 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function renderInventoryTab() {
         if (!inventoryTbody) return;
-        let totalValue = 0, alertCount = 0;
+
+        let totalUnits = 0;
+        let stockCostValue = 0;
+        let alerts = 0;
+
         if (!allProducts.length) {
             inventoryTbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No inventory data found.</td></tr>';
-        } else {
-            inventoryTbody.innerHTML = allProducts.map(p => {
-                const stock     = parseInt(p.stock_quantity || 0, 10);
-                const costPrice = parseFloat(p.mrp || 0) || (parseFloat(p.selling_price || 0) * 0.70);
-                const sellPrice = parseFloat(p.selling_price || 0);
-                const itemValue = costPrice * stock;
-                totalValue     += itemValue;
-                let badge = '<span class="badge bg-success">In Stock</span>';
-                if (stock === 0)   { badge = '<span class="badge bg-danger">Out of Stock</span>'; alertCount++; }
-                else if (stock < 10) { badge = '<span class="badge bg-warning text-dark">Low Stock</span>'; alertCount++; }
-                return `
-                    <tr>
-                        <td class="fw-bold">${p.brand || '—'}</td>
-                        <td>${p.name}</td>
-                        <td><span class="badge bg-light text-dark border">${p.category || 'General'}</span></td>
-                        <td>₹${fmt(costPrice)}</td>
-                        <td>₹${fmt(sellPrice)}</td>
-                        <td class="fw-bold">${stock}</td>
-                        <td class="fw-bold text-primary">₹${fmt(itemValue)}</td>
-                        <td>${badge}</td>
-                    </tr>`;
-            }).join('');
+            setKPI(invTotalItems, '0');
+            setKPI(invStockValue, '₹0.00');
+            setKPI(invAlertCount, '0');
+            return;
         }
-        if (invTotalItems) invTotalItems.textContent = allProducts.length;
-        if (invStockValue)  invStockValue.textContent  = `₹${fmt(totalValue)}`;
-        if (invAlertCount)  invAlertCount.textContent  = `${alertCount} Items`;
+
+        // Match the HTML headers exactly: SKU, Product Name, Category, Cost Price,
+        // Selling Price (Incl. GST), Stock Qty, Stock Value (Cost), Stock Status.
+        inventoryTbody.innerHTML = allProducts.map(p => {
+            const stock = Math.max(0, parseInt(p.stock_quantity || 0, 10) || 0);
+            const purchasePrice = Number(p.purchase_price || 0);
+            const sellingPrice = Number(p.selling_price || 0);
+            const minStock = Math.max(0, parseInt(p.min_stock || 0, 10) || 0);
+            const stockValue = purchasePrice * stock;
+
+            totalUnits += stock;
+            stockCostValue += stockValue;
+
+            let status = '<span class="badge bg-success">In Stock</span>';
+            if (stock === 0) {
+                status = '<span class="badge bg-danger">Out of Stock</span>';
+                alerts++;
+            } else if (stock <= minStock) {
+                status = '<span class="badge bg-warning text-dark">Low Stock</span>';
+                alerts++;
+            }
+
+            return `
+                <tr>
+                    <td>${escapeHtml(p.sku || `SKU-${p.id}`)}</td>
+                    <td>${escapeHtml(p.name || 'Unnamed Product')}</td>
+                    <td>${escapeHtml(p.category || 'General')}</td>
+                    <td>₹${fmt(purchasePrice)}</td>
+                    <td>₹${fmt(sellingPrice)}</td>
+                    <td>${stock}</td>
+                    <td class="fw-bold">₹${fmt(stockValue)}</td>
+                    <td>${status}</td>
+                </tr>`;
+        }).join('');
+
+        setKPI(invTotalItems, String(totalUnits));
+        setKPI(invStockValue, `₹${fmt(stockCostValue)}`);
+        setKPI(invAlertCount, String(alerts));
     }
 
     // ── 5. FILTER CONTROLS ────────────────────────────────────────────────────
@@ -302,7 +411,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const headers = ['Invoice ID','Date','Customer','Payment Method','Items','Revenue (₹)','Discount (₹)','Est. Profit (₹)'];
             const rows    = filtered.map(s => {
                 const rev  = parseFloat(s.total_amount || 0);
-                const cost = parseFloat(s.cost_amount  || 0) || rev * 0.70;
+                const cost = Number.isFinite(parseFloat(s.cost_amount)) ? parseFloat(s.cost_amount) : 0;
+                const storedProfit = parseFloat(s.profit_amount);
+                const profit = Number.isFinite(storedProfit) ? storedProfit : (Number(s.subtotal_amount ?? s.subtotal ?? 0) - cost);
                 return [
                     `#INV-${s.id}`,
                     fmtDate(s.sale_date),
@@ -311,7 +422,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     s.items_count || 0,
                     fmt(rev),
                     fmt(s.discount || 0),
-                    fmt(rev - cost)
+                    fmt(profit)
                 ].join(',');
             });
             const csv  = [headers.join(','), ...rows].join('\n');
