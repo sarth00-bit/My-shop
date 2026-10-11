@@ -8,320 +8,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/responsive.css">
-    <style>
-        /* ── PAYMENT MODAL OVERLAY ───────────────────────────────────── */
-        #paymentOverlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(15,23,42,0.72);
-            z-index: 1060;
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            align-items: center;
-            justify-content: center;
-        }
-        #paymentOverlay.active { display: flex; }
-
-        .pay-modal {
-            background: #fff;
-            border-radius: 18px;
-            width: 100%;
-            max-width: 500px;
-            max-height: 92vh;
-            overflow-y: auto;
-            box-shadow: 0 24px 64px rgba(0,0,0,0.30);
-            animation: slideUp .25s ease;
-        }
-        @keyframes slideUp {
-            from { transform: translateY(40px); opacity: 0; }
-            to   { transform: translateY(0);    opacity: 1; }
-        }
-
-        /* ── MODAL HEADER ────────────────────────────────────────────── */
-        .pay-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 20px 24px 16px;
-            border-bottom: 1px solid #e8edf3;
-        }
-        .pay-header h5 { margin: 0; font-weight: 700; font-size: 1.05rem; }
-        .pay-close {
-            background: none; border: none; cursor: pointer;
-            font-size: 1.3rem; color: #64748b; line-height: 1;
-            padding: 4px 8px; border-radius: 8px;
-            transition: background .15s;
-        }
-        .pay-close:hover { background: #f1f5f9; }
-
-        /* ── AMOUNT BANNER ───────────────────────────────────────────── */
-        .pay-amount-banner {
-            background: linear-gradient(135deg, #2a8b3d 0%, #308213 100%);
-            margin: 16px 24px;
-            border-radius: 14px;
-            padding: 18px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            color: #fff;
-        }
-        .pay-amount-banner .label { font-size: 12px; opacity: .85; font-weight: 500; letter-spacing: .04em; }
-        .pay-amount-banner .amount { font-size: 2rem; font-weight: 800; letter-spacing: -.02em; }
-        .pay-amount-banner .customer { font-size: 13px; opacity: .9; margin-top: 2px; }
-
-        /* ── METHOD TABS ─────────────────────────────────────────────── */
-        .pay-tabs {
-            display: flex;
-            gap: 8px;
-            padding: 0 24px;
-            margin-bottom: 16px;
-        }
-        .pay-tab-btn {
-            flex: 1;
-            padding: 10px 8px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            background: #f8fafc;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            color: #64748b;
-            transition: all .18s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-        }
-        .pay-tab-btn i { font-size: 1.3rem; }
-        .pay-tab-btn:hover { border-color: #94a3b8; background: #f1f5f9; }
-        .pay-tab-btn.active {
-            border-color: #D96868;
-            background: #eff6ff;
-            color: #D96868;
-        }
-        .pay-tab-btn.active-upi  { border-color: #7c3aed; background: #f5f3ff; color: #7c3aed; }
-        .pay-tab-btn.active-card { border-color: #059669; background: #ecfdf5; color: #059669; }
-
-        /* ── PANEL BODY ──────────────────────────────────────────────── */
-        .pay-panel { padding: 0 24px 8px; }
-
-        /* ── CASH PANEL ──────────────────────────────────────────────── */
-        .cash-info-box {
-            background: #f0fdf4;
-            border: 1.5px solid #bbf7d0;
-            border-radius: 12px;
-            padding: 18px;
-            text-align: center;
-            margin-bottom: 16px;
-        }
-        .cash-info-box i { font-size: 2.5rem; color: #16a34a; }
-        .cash-info-box p { margin: 8px 0 0; color: #166534; font-weight: 600; }
-
-        /* ── UPI PANEL ───────────────────────────────────────────────── */
-        .upi-qr-box {
-            border: 2px dashed #c4b5fd;
-            border-radius: 14px;
-            padding: 20px;
-            text-align: center;
-            background: #faf5ff;
-            margin-bottom: 16px;
-            position: relative;
-        }
-        .upi-qr-box img {
-            max-width: 180px;
-            max-height: 180px;
-            border-radius: 8px;
-            border: 1px solid #ddd6fe;
-        }
-        .upi-qr-placeholder {
-            width: 150px; height: 150px;
-            background: #ede9fe;
-            border-radius: 12px;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            margin: 0 auto 10px;
-            color: #7c3aed;
-        }
-        .upi-qr-placeholder i { font-size: 3rem; }
-        .upi-id-badge {
-            display: inline-block;
-            background: #fff;
-            border: 1.5px solid #c4b5fd;
-            border-radius: 8px;
-            padding: 4px 14px;
-            font-size: 13px;
-            font-weight: 600;
-            color: #6d28d9;
-            margin-top: 8px;
-        }
-        .upi-apps {
-            display: flex;
-            justify-content: center;
-            gap: 14px;
-            margin: 12px 0;
-        }
-        .upi-app-chip {
-            background: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: 20px;
-            padding: 4px 12px;
-            font-size: 11px;
-            font-weight: 600;
-            color: #475569;
-        }
-
-        /* ── CARD PANEL ──────────────────────────────────────────────── */
-        .card-machine-box {
-            background: #f0fdf4;
-            border: 2px solid #bbf7d0;
-            border-radius: 14px;
-            padding: 20px;
-            text-align: center;
-            margin-bottom: 16px;
-        }
-        .card-machine-box i { font-size: 3rem; color: #059669; }
-        .card-machine-box p { font-weight: 600; color: #065f46; margin: 8px 0 4px; }
-        .card-machine-box small { color: #047857; font-size: 12px; }
-
-        /* ── FORM FIELDS ─────────────────────────────────────────────── */
-        .pay-field-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: .05em;
-            margin-bottom: 5px;
-        }
-        .pay-input {
-            border: 1.5px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 10px 14px;
-            font-size: 14px;
-            width: 100%;
-            outline: none;
-            transition: border-color .15s;
-            font-family: inherit;
-        }
-        .pay-input:focus { border-color: #0d6efd; box-shadow: 0 0 0 3px rgba(13,110,253,.1); }
-
-        /* ── STATUS SELECTOR ─────────────────────────────────────────── */
-        .status-row {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-        .status-btn {
-            flex: 1;
-            padding: 8px 6px;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            background: #f8fafc;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 700;
-            color: #64748b;
-            text-align: center;
-            transition: all .15s;
-        }
-        .status-btn.active-paid   { border-color: #16a34a; background: #f0fdf4; color: #15803d; }
-        .status-btn.active-pending{ border-color: #d97706; background: #fffbeb; color: #b45309; }
-        .status-btn.active-failed { border-color: #dc2626; background: #fef2f2; color: #b91c1c; }
-
-        /* ── CONFIRM BUTTON ──────────────────────────────────────────── */
-        .pay-confirm-btn {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 12px;
-            font-size: 15px;
-            font-weight: 700;
-            cursor: pointer;
-            margin: 16px 0 8px;
-            transition: all .18s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        .pay-confirm-btn.btn-cash  { background: #16a34a; color: #fff; }
-        .pay-confirm-btn.btn-upi   { background: #7c3aed; color: #fff; }
-        .pay-confirm-btn.btn-card  { background: #059669; color: #fff; }
-        .pay-confirm-btn:hover     { filter: brightness(1.08); transform: translateY(-1px); }
-        .pay-confirm-btn:disabled  { opacity: .5; cursor: not-allowed; transform: none; }
-
-        /* ── SUCCESS SCREEN ──────────────────────────────────────────── */
-        .pay-success {
-            display: none;
-            text-align: center;
-            padding: 32px 24px;
-        }
-        .pay-success.active { display: block; }
-        .success-circle {
-            width: 80px; height: 80px;
-            background: #dcfce7;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 16px;
-            animation: popIn .3s ease;
-        }
-        @keyframes popIn {
-            from { transform: scale(0.5); opacity: 0; }
-            to   { transform: scale(1);   opacity: 1; }
-        }
-        .success-circle i { font-size: 2.5rem; color: #16a34a; }
-        .pay-success h4 { font-weight: 800; margin-bottom: 6px; }
-        .pay-ref-box {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 12px 16px;
-            margin: 16px 0;
-            text-align: left;
-        }
-        .pay-ref-box .ref-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-            margin-bottom: 5px;
-        }
-        .pay-ref-box .ref-row:last-child { margin: 0; }
-        .pay-ref-box .ref-label { color: #64748b; }
-        .pay-ref-box .ref-value { font-weight: 600; color: #1e293b; }
-
-        /* ── FAILED SCREEN ───────────────────────────────────────────── */
-        .pay-failed {
-            display: none;
-            text-align: center;
-            padding: 32px 24px;
-        }
-        .pay-failed.active { display: block; }
-        .failed-circle {
-            width: 80px; height: 80px;
-            background: #fee2e2;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 16px;
-        }
-        .failed-circle i { font-size: 2.5rem; color: #dc2626; }
-
-        /* ── DIVIDER ─────────────────────────────────────────────────── */
-        .pay-divider {
-            height: 1px; background: #f1f5f9;
-            margin: 12px 0;
-        }
-
-        /* ── SECURITY NOTE ───────────────────────────────────────────── */
-        .security-note {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 11px;
-            color: #94a3b8;
-            padding: 0 24px 16px;
-        }
-        .security-note i { font-size: 13px; color: #64748b; }
-    </style>
 </head>
 <body>
 
@@ -366,7 +52,7 @@
     </nav>
 
     <div class="d-flex" id="wrapper">
-        <div class="d-flex flex-column p-3 bg-dark text-white sidebar shadow" id="sidebarMenu" style="width:250px;min-height:100vh;">
+        <div class="d-flex flex-column p-3 bg-dark text-white sidebar shadow" id="sidebarMenu">
             <ul class="nav nav-pills flex-column mb-auto">
                 <li class="nav-item mb-1"><a href="Dashboard.html" class="nav-link text-white"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a></li>
                 <li class="mb-1"><a href="billing.html" class="nav-link active text-white"><i class="bi bi-receipt me-2"></i> Billing</a></li>
@@ -391,13 +77,14 @@
                         <div class="card border-0 shadow-sm p-3 mb-3">
                             <div class="d-flex gap-2 overflow-auto pb-2 mb-2" id="categoryPills">
                                 <button class="btn btn-primary rounded-pill px-3 active category-pill" data-category="All">All</button>
-                                <button class="btn btn-outline-secondary rounded-pill px-3 category-pill" data-category="Electronics">Electronics</button>
+                                <button class="btn btn-outline-secondary rounded-pill px-3 category-pill" data-category="Electronic">Electronic</button>
                                 <button class="btn btn-outline-secondary rounded-pill px-3 category-pill" data-category="Apparel">Apparel</button>
                                 <button class="btn btn-outline-secondary rounded-pill px-3 category-pill" data-category="Accessories">Accessories</button>
+                                <button class="btn btn-outline-secondary rounded-pill px-3 category-pill" data-category="General">General</button>
                             </div>
                             <div class="input-group">
                                 <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-                                <input type="text" id="billingProductSearch" class="form-control form-control-lg border-start-0 ps-0" placeholder="Search by Name, SKU, or ID...">
+                                <input type="text" id="billingProductSearch" class="form-control form-control-lg border-start-0 ps-0" placeholder="Search by Name, SKU, Barcode, or ID...">
                             </div>
                         </div>
 
@@ -423,7 +110,7 @@
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <h6 class="fw-bold mb-0 text-secondary"><i class="bi bi-grid-3x3-gap me-2"></i>Select Products</h6>
                         </div>
-                        <div class="row g-3 overflow-auto style-scrollbar" id="productGrid" style="max-height:420px;"></div>
+                        <div class="row g-3 overflow-auto style-scrollbar product-grid-scroll" id="productGrid"></div>
                     </div>
 
                     <!-- RIGHT: Customer + Payment Summary -->
@@ -448,16 +135,36 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between mb-2">
-                                        <span class="text-muted">Subtotal</span>
-                                        <span class="fw-semibold" id="summarySubtotal">₹0.00</span>
+                                        <span class="text-muted">Selling Total (Incl. GST)</span>
+                                        <span class="fw-semibold" id="summarySellingTotal">₹0.00</span>
                                     </div>
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span class="text-muted">Total GST</span>
-                                        <span class="fw-semibold" id="summaryGST">₹0.00</span>
-                                    </div>
+
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <span class="text-muted">Discount (₹)</span>
-                                        <input type="number" id="discountInput" class="form-control form-control-sm text-end" style="width:100px;" value="0" min="0">
+                                        <input type="number" id="discountInput" class="form-control form-control-sm text-end discount-input" value="0" min="0">
+                                    </div>
+
+                                    <div class="billing-tax-summary mb-2">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-muted">Taxable Amount (Excl. GST)</span>
+                                            <span class="fw-semibold" id="summaryTaxable">₹0.00</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-muted">CGST</span>
+                                            <span class="fw-semibold" id="summaryCGST">₹0.00</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-muted">SGST</span>
+                                            <span class="fw-semibold" id="summarySGST">₹0.00</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between billing-total-gst">
+                                            <span class="text-muted fw-semibold">Total GST Included</span>
+                                            <span class="fw-semibold" id="summaryGST">₹0.00</span>
+                                        </div>
+                                    </div>
+                                    <div class="small text-muted billing-tax-note mb-3">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Selling prices include GST. Discount is applied first, then GST is extracted from the final customer price.
                                     </div>
                                     <hr>
                                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -511,7 +218,7 @@
                     <div class="amount" id="payAmountDisplay">₹0.00</div>
                     <div class="customer" id="payCustomerDisplay">Walk-in Customer</div>
                 </div>
-                <i class="bi bi-bag-check-fill" style="font-size:2.8rem;opacity:.3;"></i>
+                <i class="bi bi-bag-check-fill pay-banner-icon"></i>
             </div>
 
             <!-- PAYMENT METHOD TABS -->
@@ -538,9 +245,9 @@
                     <div class="pay-field-label">Cash Tendered (₹)</div>
                     <input type="number" class="pay-input" id="cashTendered" placeholder="Enter amount received" min="0" oninput="calcChange()">
                 </div>
-                <div class="mb-3 p-3" style="background:#f0fdf4;border-radius:10px;display:flex;justify-content:space-between;align-items:center;">
-                    <span style="font-size:13px;color:#166534;font-weight:600;">Change to Return</span>
-                    <span id="cashChange" style="font-size:1.2rem;font-weight:800;color:#16a34a;">₹0.00</span>
+                <div class="mb-3 p-3 cash-change-row">
+                    <span class="cash-change-label">Change to Return</span>
+                    <span id="cashChange" class="cash-change-value">₹0.00</span>
                 </div>
 
                 <button class="pay-confirm-btn btn-cash" id="btnConfirmCash">
@@ -549,7 +256,7 @@
             </div>
 
             <!-- ─── UPI PANEL ─── -->
-            <div class="pay-panel" id="panelUPI" style="display:none;">
+            <div class="pay-panel pay-panel-initially-hidden" id="panelUPI">
                 <div class="upi-qr-box">
                     <div id="upiQrDisplay">
                         <!-- QR image or placeholder injected by JS -->
@@ -561,11 +268,11 @@
                         <span class="upi-app-chip">BHIM</span>
                     </div>
                     <div id="upiIdDisplay" class="upi-id-badge"></div>
-                    <div id="upiBusinessDisplay" style="font-size:12px;color:#6d28d9;margin-top:4px;"></div>
+                    <div id="upiBusinessDisplay" class="upi-business-name"></div>
                 </div>
 
                 <div class="mb-3">
-                    <div class="pay-field-label">UPI Transaction / Reference ID <span style="color:#dc2626">*</span></div>
+                    <div class="pay-field-label">UPI Transaction / Reference ID <span class="text-required">*</span></div>
                     <input type="text" class="pay-input" id="upiRefInput" placeholder="e.g. 406782340123456789" maxlength="25">
                 </div>
 
@@ -584,7 +291,7 @@
             </div>
 
             <!-- ─── CARD PANEL ─── -->
-            <div class="pay-panel" id="panelCard" style="display:none;">
+            <div class="pay-panel pay-panel-initially-hidden" id="panelCard">
                 <div class="card-machine-box">
                     <i class="bi bi-sim-fill"></i>
                     <p>Swipe / Tap / Insert card on the POS machine</p>
@@ -592,13 +299,13 @@
                 </div>
 
                 <div class="mb-3">
-                    <div class="pay-field-label">Card Transaction / Reference ID <span style="color:#dc2626">*</span></div>
+                    <div class="pay-field-label">Card Transaction / Reference ID <span class="text-required">*</span></div>
                     <input type="text" class="pay-input" id="cardRefInput" placeholder="e.g. TXN123456789" maxlength="25">
                 </div>
 
                 <div class="mb-3">
                     <div class="pay-field-label">Card Type</div>
-                    <select class="pay-input" id="cardTypeSelect" style="cursor:pointer;">
+                    <select class="pay-input pay-select" id="cardTypeSelect">
                         <option value="Debit Card">Debit Card</option>
                         <option value="Credit Card">Credit Card</option>
                     </select>
@@ -612,7 +319,7 @@
                     </div>
                 </div>
 
-                <div class="mb-3 p-3" style="background:#fef3c7;border:1.5px solid #fde68a;border-radius:10px;font-size:12px;color:#92400e;">
+                <div class="mb-3 p-3 pay-security-notice">
                     <i class="bi bi-shield-check me-1"></i>
                     <strong>Security Notice:</strong> Do not enter card number, CVV, PIN or any sensitive information. Only the transaction reference ID is stored.
                 </div>
@@ -626,9 +333,9 @@
             <div class="pay-success" id="paySuccessScreen">
                 <div class="success-circle"><i class="bi bi-check-lg"></i></div>
                 <h4 class="text-success">Payment Confirmed!</h4>
-                <p class="text-muted" style="font-size:14px;">Invoice has been generated successfully.</p>
+                <p class="text-muted pay-message">Invoice has been generated successfully.</p>
                 <div class="pay-ref-box" id="paySuccessDetails"></div>
-                <button class="pay-confirm-btn btn-cash" id="btnNewBill" style="margin-top:8px;">
+                <button class="pay-confirm-btn btn-cash btn-new-bill" id="btnNewBill">
                     <i class="bi bi-plus-circle"></i> Start New Bill
                 </button>
             </div>
@@ -637,8 +344,8 @@
             <div class="pay-failed" id="payFailedScreen">
                 <div class="failed-circle"><i class="bi bi-x-lg"></i></div>
                 <h4 class="text-danger">Payment Failed</h4>
-                <p class="text-muted" style="font-size:14px;">Invoice was NOT generated. Please retry or choose a different payment method.</p>
-                <button class="pay-confirm-btn" onclick="resetPayOverlay()" style="background:#64748b;color:#fff;">
+                <p class="text-muted pay-message">Invoice was NOT generated. Please retry or choose a different payment method.</p>
+                <button class="pay-confirm-btn btn-retry" onclick="resetPayOverlay()">
                     <i class="bi bi-arrow-counterclockwise"></i> Try Again
                 </button>
             </div>
@@ -653,9 +360,9 @@
     <!-- END PAYMENT OVERLAY -->
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="./js/app.js"></script>
-    <script src="./js/config.js"></script>
-    <script src="./js/responsive.js"></script>
-    <script src="./js/billing.js"></script>
+    <script src="../Html/js/app.js"></script>
+    <script src="../Html/js/config.js"></script>
+    <script src="../Html/js/responsive.js"></script>  
+    <script src="../Html/js/billing.js"></script>
 </body>
 </html>
