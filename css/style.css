@@ -1,13 +1,40 @@
 /* ==========================================================================
-   1. CSS THEME VARIABLES (LIGHT & DARK MODE)
+   MyShop Manager — style.css
+   Single stylesheet for: Dashboard, Billing, Products, Invoices, Report
+   (and the shared layout used by Settings).
+
+   NOTE: responsive.css and settings.css are separate files and are NOT merged
+   here. The Settings pages load style.css first, then settings.css.
+
+   TABLE OF CONTENTS
+   --------------------------------------------------------------------------
+    1. Design tokens (light + dark theme variables)
+    2. Base & page layout
+    3. Top navbar
+    4. Header shop profile (admin name + logo)
+    5. Sidebar (+ collapsed state)
+    6. Shared components (cards, tables, forms, dark-mode overrides)
+    7. KPI cards (Dashboard + Report) and colour palette
+    8. Utilities (scrollbar, logo preview, report tabs)
+    9. PAGE: Dashboard
+   10. PAGE: Billing (POS counter + payment overlay)
+   11. PAGE: Products
+   12. PAGE: Invoices
+   13. PAGE: Report
+   14. Print
+   ========================================================================== */
+
+
+/* ==========================================================================
+   1. DESIGN TOKENS
    ========================================================================== */
 :root {
-    /* Primary Colors */
+    /* Brand */
     --bs-primary-rgb: 13, 110, 253;
     --navbar-bg: #0A4D68;
     --navbar-color: #ffffff;
-    
-    /* Light Theme Defaults */
+
+    /* Light theme */
     --bg-main: #f0f0f0;
     --bg-card: #fbfbfb;
     --text-primary: #212529;
@@ -15,8 +42,12 @@
     --border-color: #dee2e6;
     --table-header-bg: #f8f9fa;
     --table-hover-bg: rgba(0, 0, 0, 0.04);
-    
-    /* Sidebar Specific (Consolidated Dark Theme) */
+
+    /* Extra surfaces (used by the Products modal) */
+    --surface-subtle: #f8f9fa;
+    --surface-raised: #ffffff;
+
+    /* Sidebar */
     --sidebar-bg: #212529;
     --sidebar-color: #ffffff;
     --sidebar-link-color: rgba(255, 255, 255, 0.75);
@@ -24,9 +55,21 @@
     --sidebar-link-active-bg: rgba(255, 255, 255, 0.2);
     --sidebar-width: 250px;
     --sidebar-collapsed-width: 70px;
+
+    /* Layout */
+    --navbar-height: 56px;
+
+    /* KPI / stat-card palette */
+    --kpi-orange: #E59934;
+    --kpi-green: #198754;
+    --kpi-purple: #722F99;
+    --kpi-grey: #6c757d;
+    --kpi-red: #dc3545;
+    --kpi-amber: #467804;
+    --kpi-dark: #212529;
 }
 
-/* Dark Mode Variable Overrides */
+/* Dark theme overrides */
 body.dark-mode,
 [data-bs-theme="dark"] {
     --bg-main: #121212;
@@ -38,57 +81,97 @@ body.dark-mode,
     --sidebar-bg: #181b1e;
     --table-header-bg: #2b3035;
     --table-hover-bg: rgba(255, 255, 255, 0.05);
+    --surface-subtle: #25292d;
+    --surface-raised: #1e1e1e;
+    --kpi-dark: #2b3035;
 }
 
+
 /* ==========================================================================
-   2. GLOBAL LAYOUT RESET & CORE STYLES
+   2. BASE & PAGE LAYOUT
    ========================================================================== */
 * {
     box-sizing: border-box;
 }
 
+html {
+    height: 100%;
+    background-color: var(--bg-main, #f8f9fa);
+}
+
 body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    padding-top: var(--navbar-height) !important; /* keep content below the fixed navbar */
     background-color: var(--bg-main) !important;
     color: var(--text-primary);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     transition: background-color 0.3s ease, color 0.3s ease;
-    margin: 0;
-    padding: 0;
 }
 
+/* Dark mode: full-viewport dark background, no white gaps */
+body.dark-mode,
+[data-bs-theme="dark"],
+[data-bs-theme="dark"] body {
+    background-color: #121212 !important;
+    color: #e0e0e0 !important;
+}
+
+/* Sidebar + main content sit side by side */
 #wrapper {
-    display: flex;
-    width: 100%;
-    min-height: calc(100vh - 56px);
+    display: flex !important;
+    width: 100% !important;
+    min-height: calc(100vh - var(--navbar-height)) !important;
+    background-color: inherit;
 }
 
+main,
 .main-content,
-main.flex-grow-1,
 .report-main-content {
+    flex: 1;
+    flex-grow: 1 !important;
+    min-width: 0 !important; /* prevents grid/flex overflow */
+    min-height: calc(100vh - var(--navbar-height));
+    padding: 1.5rem;
     background-color: var(--bg-main);
-    min-height: calc(100vh - 56px);
-    flex-grow: 1;
     transition: background-color 0.3s ease;
 }
 
+/* Hide the broken-image icon while an <img> has no source */
+img[src=""],
+img:not([src]) {
+    opacity: 0;
+}
+
+
 /* ==========================================================================
-   3. UNIFIED TOP NAVBAR (Supports standard <nav> & custom <header>)
+   3. TOP NAVBAR
    ========================================================================== */
 .top-navbar,
 nav.navbar.fixed-top,
 header.top-navbar {
-    background-color: var(--navbar-bg) !important;
-    height: 56px;
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     z-index: 1040;
+    height: var(--navbar-height);
     padding: 0 1rem;
+    background-color: var(--navbar-bg) !important;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     transition: background-color 0.3s ease;
 }
 
+/* Inner container: brand stays left, profile stays right */
+nav.navbar.fixed-top > .container-fluid {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    flex-wrap: nowrap !important;
+}
+
+/* Brand */
 .top-navbar .navbar-brand,
 nav.navbar .navbar-brand {
     font-weight: 700;
@@ -97,15 +180,35 @@ nav.navbar .navbar-brand {
     text-decoration: none;
 }
 
-/* Top Bar Toggle Button */
+nav.navbar.fixed-top > .container-fluid > .navbar-brand {
+    position: static !important;
+    order: 0 !important;
+    float: none !important;
+    transform: none !important;
+    margin-left: 0 !important;
+    margin-right: auto !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+nav.navbar.fixed-top .navbar-brand {
+    left: auto !important;
+    right: auto !important;
+    inset-inline-start: auto !important;
+    inset-inline-end: auto !important;
+}
+
+/* Hamburger / sidebar toggle */
 #sidebarToggle,
 #btnToggleSidebar,
 .btn-toggle {
+    position: relative;
+    z-index: 2000; /* always above page content */
+    padding: 0.25rem 0.6rem;
     background: transparent;
     border: 1px solid rgba(255, 255, 255, 0.3);
-    color: #ffffff;
-    padding: 0.25rem 0.6rem;
     border-radius: 4px;
+    color: #ffffff;
     cursor: pointer;
 }
 
@@ -115,6 +218,13 @@ nav.navbar .navbar-brand {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
+nav.navbar.fixed-top > .container-fluid > #sidebarToggle {
+    flex: 0 0 auto !important;
+    margin-left: 0 !important;
+    margin-right: 0.5rem !important;
+}
+
+/* Optional navbar search box */
 .top-navbar .search-input,
 nav.navbar input[type="search"] {
     max-width: 250px;
@@ -134,32 +244,118 @@ nav.navbar input[type="search"]:focus {
     color: #212529;
 }
 
+@media (max-width: 576px) {
+    nav.navbar.fixed-top > .container-fluid > .navbar-brand {
+        margin-left: 0 !important;
+        margin-right: auto !important;
+        white-space: nowrap !important;
+    }
+}
+
+
 /* ==========================================================================
-   4. UNIFIED COLLAPSIBLE SIDEBAR
+   4. HEADER SHOP PROFILE (admin name + shop logo, right side of navbar)
+   ========================================================================== */
+.header-shop-profile {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    min-width: 0;
+    margin-left: auto;
+    padding-left: 12px;
+}
+
+nav.navbar.fixed-top > .container-fluid > .header-shop-profile,
+nav.navbar.fixed-top > .container-fluid > .ms-auto {
+    flex: 0 0 auto !important;
+    margin-left: auto !important;
+}
+
+.header-admin-name {
+    max-width: 180px;
+    overflow: hidden;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.header-shop-logo-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 8px;
+}
+
+.header-shop-logo {
+    display: none; /* shown by JS once a logo exists */
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #ffffff;
+}
+
+.header-shop-logo-fallback {
+    color: #ffffff;
+    font-size: 21px;
+}
+
+@media (max-width: 576px) {
+    .header-admin-name {
+        max-width: 120px;
+        font-size: 13px;
+    }
+
+    .header-shop-logo-wrap {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+    }
+}
+
+
+/* ==========================================================================
+   5. SIDEBAR
    ========================================================================== */
 .sidebar,
 #sidebar,
 #sidebarMenu {
-    width: var(--sidebar-width);
+    flex-shrink: 0 !important;
+    width: var(--sidebar-width) !important;
     min-width: var(--sidebar-width);
+    min-height: calc(100vh - var(--navbar-height)) !important;
+    z-index: 1000;
     background-color: var(--sidebar-bg) !important;
     color: var(--sidebar-color);
-    min-height: calc(100vh - 56px);
-    transition: all 0.3s ease-in-out;
-    z-index: 1030;
+    transition:
+        width 0.25s ease,
+        min-width 0.25s ease,
+        max-width 0.25s ease,
+        flex-basis 0.25s ease,
+        opacity 0.2s ease,
+        padding 0.25s ease,
+        margin 0.25s ease !important;
 }
 
-/* Standard Nav Links Inside Sidebar */
+/* Links */
 .sidebar .nav-link,
 #sidebar .nav-link,
 #sidebarMenu .nav-link {
-    color: var(--sidebar-link-color) !important;
-    padding: 0.7rem 1rem;
-    font-weight: 500;
-    border-radius: 6px;
-    margin-bottom: 4px;
     display: flex;
     align-items: center;
+    margin-bottom: 4px;
+    padding: 0.7rem 1rem;
+    border-radius: 6px;
+    color: var(--sidebar-link-color) !important;
+    font-weight: 500;
     text-decoration: none;
     transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
 }
@@ -167,9 +363,9 @@ nav.navbar input[type="search"]:focus {
 .sidebar .nav-link i,
 #sidebar .nav-link i,
 #sidebarMenu .nav-link i {
-    font-size: 1.1rem;
     width: 24px;
     margin-right: 8px;
+    font-size: 1.1rem;
     text-align: center;
 }
 
@@ -188,10 +384,14 @@ nav.navbar input[type="search"]:focus {
     font-weight: 600;
 }
 
-/* Collapsed Sidebar State (Toggled via JS) */
-body.sidebar-collapsed .sidebar,
-body.sidebar-collapsed #sidebar,
-body.sidebar-collapsed #sidebarMenu,
+/* Footer (user id + sign-out) */
+.sidebar-footer {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Narrow-strip variant (class toggled directly on the sidebar) */
 .sidebar.collapsed,
 #sidebar.collapsed,
 #sidebarMenu.collapsed {
@@ -199,15 +399,12 @@ body.sidebar-collapsed #sidebarMenu,
     min-width: var(--sidebar-collapsed-width) !important;
 }
 
-body.sidebar-collapsed .sidebar-text,
-body.sidebar-collapsed .sidebar-footer-text,
 .sidebar.collapsed .sidebar-text,
 #sidebar.collapsed .sidebar-text,
 #sidebarMenu.collapsed .sidebar-text {
     display: none !important;
 }
 
-body.sidebar-collapsed .sidebar .nav-link,
 .sidebar.collapsed .nav-link,
 #sidebar.collapsed .nav-link,
 #sidebarMenu.collapsed .nav-link {
@@ -215,25 +412,61 @@ body.sidebar-collapsed .sidebar .nav-link,
     padding: 0.7rem 0;
 }
 
-body.sidebar-collapsed .sidebar .nav-link i,
 .sidebar.collapsed .nav-link i,
 #sidebar.collapsed .nav-link i,
 #sidebarMenu.collapsed .nav-link i {
     margin-right: 0;
 }
 
-/* Sidebar Footer Profile Area */
-.sidebar-footer {
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding-top: 1rem;
-    margin-top: auto;
+/* Fully hidden variant (hamburger adds body.sidebar-collapsed) */
+body.sidebar-collapsed #sidebarMenu,
+body.sidebar-collapsed #sidebar,
+body.sidebar-collapsed .sidebar {
+    flex: 0 0 0 !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    overflow: hidden !important;
+    opacity: 0;
 }
 
+/* Hide every child so text cannot spill into the main content */
+body.sidebar-collapsed #sidebarMenu > *,
+body.sidebar-collapsed #sidebar > *,
+body.sidebar-collapsed .sidebar > * {
+    display: none !important;
+}
+
+body.sidebar-collapsed .sidebar-text,
+body.sidebar-collapsed .sidebar-footer-text {
+    display: none !important;
+}
+
+/* Main content takes the full width when the sidebar is hidden */
+body.sidebar-collapsed #wrapper {
+    width: 100% !important;
+}
+
+body.sidebar-collapsed #wrapper > main,
+body.sidebar-collapsed #wrapper > .main-content,
+body.sidebar-collapsed .main-content,
+body.sidebar-collapsed .report-main-content {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+}
+
+
 /* ==========================================================================
-   5. UI COMPONENTS & DARK MODE OVERRIDES
+   6. SHARED COMPONENTS
    ========================================================================== */
 
-/* Cards Core */
+/* ---- Cards -------------------------------------------------------------- */
 .card {
     background-color: var(--bg-card) !important;
     border-color: var(--border-color) !important;
@@ -252,7 +485,7 @@ body.sidebar-collapsed .sidebar .nav-link i,
     border-top-color: var(--border-color) !important;
 }
 
-/* Tables Styling & Dark Mode Compatibility */
+/* ---- Tables ------------------------------------------------------------- */
 .table {
     color: var(--text-primary) !important;
     border-color: var(--border-color) !important;
@@ -262,17 +495,17 @@ body.sidebar-collapsed .sidebar .nav-link i,
 .table-light th,
 .table thead th {
     background-color: var(--table-header-bg) !important;
-    color: var(--text-secondary) !important;
     border-color: var(--border-color) !important;
+    color: var(--text-secondary) !important;
     font-size: 0.85rem;
-    text-transform: uppercase;
     letter-spacing: 0.03em;
+    text-transform: uppercase;
 }
 
 .table td {
     vertical-align: middle;
-    border-color: var(--border-color) !important;
     background-color: transparent !important;
+    border-color: var(--border-color) !important;
     color: var(--text-primary) !important;
 }
 
@@ -280,58 +513,7 @@ body.sidebar-collapsed .sidebar .nav-link i,
     background-color: var(--table-hover-bg) !important;
 }
 
-/* KPI Cards Override */
-.kpi-card {
-    border: none !important;
-    border-radius: 8px;
-    transition: transform 0.2s ease-in-out;
-}
-
-.kpi-card:hover {
-    transform: translateY(-2px);
-}
-
-/* Custom Product Round Add Button */
-.product-card .btn-add,
-.product-card .add-btn,
-.product-card .btn-outline-secondary,
-.product-card .btn-outline-primary {
-    background-color: #198754 !important;
-    color: #ffffff !important;
-    border-color: #198754 !important;
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.product-card .btn-add:hover,
-.product-card .add-btn:hover,
-.product-card .btn-outline-secondary:hover,
-.product-card .btn-outline-primary:hover {
-    background-color: #157347 !important;
-    border-color: #157347 !important;
-}
-
-/* Report Navigation Tabs */
-.report-tabs .nav-link {
-    color: var(--text-secondary);
-    border: 1px solid transparent;
-    border-radius: 6px 6px 0 0;
-    padding: 0.75rem 1rem;
-}
-
-.report-tabs .nav-link.active {
-    color: #fd0db5 !important;
-    background-color: var(--bg-card) !important;
-    border-color: #fd0db5 !important;
-    border-bottom: 3px solid #f90dfd !important;
-}
-
-/* Forms & Inputs Dark Mode Integration */
+/* ---- Dark-mode overrides for Bootstrap components ----------------------- */
 body.dark-mode .form-control,
 body.dark-mode .form-select,
 [data-bs-theme="dark"] .form-control,
@@ -372,11 +554,10 @@ body.dark-mode .dropdown-item:hover,
 body.dark-mode .modal-content,
 [data-bs-theme="dark"] .modal-content {
     background-color: var(--bg-card) !important;
-    color: var(--text-primary) !important;
     border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
 }
 
-/* Text Overrides for Dark Mode */
 body.dark-mode .text-dark,
 [data-bs-theme="dark"] .text-dark {
     color: #f8f9fa !important;
@@ -395,9 +576,110 @@ body.dark-mode .bg-light,
     color: #ffffff !important;
 }
 
+
 /* ==========================================================================
-   6. UTILITIES & SCROLLBARS
+   7. KPI CARDS
    ========================================================================== */
+
+/* ---- 7a. Dashboard KPI cards (.card-kpi) --------------------------------- */
+.card-kpi {
+    border: none !important;
+    border-radius: 8px !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-kpi:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Everything inside a KPI card renders white */
+.card-kpi *,
+.card-kpi .card-body * {
+    color: #ffffff !important;
+}
+
+.card-kpi .kpi-title {
+    margin-bottom: 0.25rem;
+    font-size: 0.825rem;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+.card-kpi .kpi-value {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.card-kpi .kpi-icon {
+    font-size: 2.2rem;
+    opacity: 0.75;
+}
+
+/* ---- 7b. Report KPI cards (.kpi-card) ------------------------------------ */
+.kpi-card,
+.card.kpi {
+    border: none !important;
+    border-radius: 10px !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-card:hover,
+.card.kpi:hover {
+    transform: translateY(-3px);
+}
+
+.kpi-card *,
+.card.kpi * {
+    color: #ffffff !important;
+}
+
+.card.kpi-card .text-muted,
+.card.kpi-card small,
+.card.kpi .text-muted,
+.card.kpi small {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Amber card needs dark text for contrast */
+.kpi-card.kpi-amber,
+.kpi-card.kpi-amber * {
+    color: #ffffff !important;
+}
+
+.card.kpi-card.kpi-amber small,
+.card.kpi-card.kpi-amber .text-muted {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* ---- 7c. Colour palette (shared by 7a and 7b) ---------------------------- */
+/* Class names are historical; the actual colours are defined by the tokens. */
+.kpi-blue   { background-color: var(--kpi-orange) !important; }   /* orange */
+.kpi-green  { background-color: var(--kpi-green)  !important; }
+.kpi-cyan   { background-color: var(--kpi-purple) !important; }   /* purple */
+.kpi-grey   { background-color: var(--kpi-grey)   !important; }
+.kpi-red    { background-color: var(--kpi-red)    !important; }
+.kpi-amber  { background-color: var(--kpi-amber)  !important; }
+.kpi-dark   { background-color: var(--kpi-dark)   !important; }
+
+/* Legacy gradient variants */
+.kpi-primary { background: linear-gradient(135deg, #fd1d0d, #a11404) !important; }
+.kpi-success { background: linear-gradient(135deg, #198754, #146c43) !important; }
+.kpi-warning { background: linear-gradient(135deg, #fd7e14, #d96102) !important; }
+.kpi-info    { background: linear-gradient(135deg, #039203, #067e16) !important; }
+
+
+/* ==========================================================================
+   8. UTILITIES
+   ========================================================================== */
+
+/* Slim scrollbar */
 .style-scrollbar::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -417,139 +699,18 @@ body.dark-mode .style-scrollbar::-webkit-scrollbar-thumb,
     background: rgba(255, 255, 255, 0.2);
 }
 
-/* ==========================================================================
-   7. PRINT MEDIA RULES
-   ========================================================================== */
-@media print {
-    .no-print, 
-    .top-navbar, 
-    nav.navbar,
-    .sidebar,
-    #sidebar,
-    #sidebarMenu {
-        display: none !important;
-    }
-    
-    body {
-        padding-top: 0 !important;
-        background-color: #ffffff !important;
-        color: #000000 !important;
-    }
-    
-    .main-content,
-    #wrapper main {
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-}
-
-/* ==========================================================================
-   FIX 1: NAVBAR & SIDEBAR LAYOUT OVERLAP (SETTINGS & REPORT PAGE)
-   ========================================================================== */
-/* Prevents header content from being hidden behind the 56px top navbar */
-body {
-    padding-top: 56px !important;
-}
-
-/* Flex layout ensuring main content never overlaps or hides the sidebar */
-#wrapper {
-    display: flex !important;
-    width: 100% !important;
-    min-height: calc(100vh - 56px) !important;
-}
-
-/* Keep sidebar fixed width and prevent squishing */
-.sidebar,
-#sidebar,
-#sidebarMenu {
-    flex-shrink: 0 !important;
-    width: var(--sidebar-width) !important;
-    min-height: calc(100vh - 56px) !important;
-    z-index: 1000;
-}
-
-/* Ensure main content flexes properly without pushing into the sidebar */
-.main-content,
-main,
-.report-main-content {
-    flex-grow: 1 !important;
-    min-width: 0 !important; /* Critical: prevents grid/flex overflow */
-    padding: 1.5rem;
-    background-color: var(--bg-main);
-}
-
-/* ==========================================================================
-   FIX 2: COLORFUL KPI CARDS (DASHBOARD & REPORT PAGE IN DARK MODE)
-   ========================================================================== */
-/* Give KPI cards distinct colorful gradient backgrounds in both Light & Dark Mode */
-.kpi-card,
-.card.kpi {
-    border: none !important;
-    color: #ffffff !important;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border-radius: 10px !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.kpi-card:hover,
-.card.kpi:hover {
-    transform: translateY(-3px);
-}
-
-/* Color Palette for KPI Cards */
-.kpi-card:nth-child(1),
-.card.kpi:nth-child(1),
-.kpi-primary {
-    background: linear-gradient(135deg, #fd1d0d, #a11404) !important;
-}
-
-.kpi-card:nth-child(2),
-.card.kpi:nth-child(2),
-.kpi-success {
-    background: linear-gradient(135deg, #198754, #146c43) !important;
-}
-
-.kpi-card:nth-child(3),
-.card.kpi:nth-child(3),
-.kpi-warning {
-    background: linear-gradient(135deg, #fd7e14, #d96102) !important;
-}
-
-.kpi-card:nth-child(4),
-.card.kpi:nth-child(4),
-.kpi-info {
-    background: linear-gradient(135deg, #039203, #067e16) !important;
-}
-
-/* Ensure text and sub-labels remain high contrast and visible */
-.kpi-card *,
-.card.kpi * {
-    color: #ffffff !important;
-}
-
-.kpi-card .text-muted,
-.card.kpi .text-muted,
-.kpi-card small,
-.card.kpi small {
-    color: rgba(255, 255, 255, 0.8) !important;
-}
-
-/* ==========================================================================
-   FIX 3: LOGO PREVIEW STYLING (SETTINGS PAGE)
-   ========================================================================== */
-/* Clean box container for image upload preview */
+/* Logo upload preview (Settings page) */
 .logo-preview-box {
-    width: 120px;
-    height: 80px;
-    border: 2px dashed var(--border-color);
-    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--bg-card);
-    overflow: hidden;
+    width: 120px;
+    height: 80px;
     margin-top: 10px;
+    overflow: hidden;
+    background-color: var(--bg-card);
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
 }
 
 .logo-preview-box img {
@@ -558,458 +719,27 @@ main,
     object-fit: contain;
 }
 
-/* Hide broken image alt icons when no image is selected */
-img[src=""], img:not([src]) {
-    opacity: 0;
+/* Report page tabs */
+.report-tabs .nav-link {
+    padding: 0.75rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 6px 6px 0 0;
+    color: var(--text-secondary);
 }
+
+.report-tabs .nav-link.active {
+    background-color: var(--bg-card) !important;
+    border-color: #fd0db5 !important;
+    border-bottom: 3px solid #f90dfd !important;
+    color: #fd0db5 !important;
+}
+
 
 /* ==========================================================================
-   DASHBOARD COLORFUL KPI CARDS (EXACT MATCH FOR LIGHT & DARK MODE)
+   9. PAGE: DASHBOARD  (body.dashboard-page)
    ========================================================================== */
 
-/* Core Dashboard Card Styling */
-.card-kpi {
-    border: none !important;
-    border-radius: 8px !important;
-    color: #ffffff !important;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.card-kpi:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* Force all child elements & text inside KPI cards to render white */
-.card-kpi *,
-.card-kpi .card-body * {
-    color: #ffffff !important;
-}
-
-.card-kpi .kpi-title {
-    font-size: 0.825rem;
-    font-weight: 500;
-    opacity: 0.9;
-    margin-bottom: 0.25rem;
-}
-
-.card-kpi .kpi-value {
-    font-size: 1.75rem;
-    font-weight: 700;
-    line-height: 1.2;
-    margin: 0;
-}
-
-.card-kpi .kpi-icon {
-    font-size: 2.2rem;
-    opacity: 0.75;
-}
-
-/* --- Color Classes (Exact Match to Screenshot) --- */
-
-/* 1. Today's Sales (Bright Blue) */
-.kpi-blue {
-    background-color: #E59934 !important;
-}
-
-/* 2. Today's Profit (Forest Green) */
-.kpi-green {
-    background-color: #198754 !important;
-}
-
-/* 3. Monthly Sales (Cyan / Turquoise) */
-.kpi-cyan {
-    background-color: #722F99 !important;
-}
-
-/* 4. Today's Bills (Dark Charcoal) */
-.kpi-dark {
-    background-color: #212529 !important;
-}
-
-/* 5. Stock Quantity (Slate Grey) */
-.kpi-grey {
-    background-color: #6c757d !important;
-}
-
-/* 6. Low Stock Items (Crimson Red) */
-.kpi-red {
-    background-color: #dc3545 !important;
-}
-
-/* --- Dark Mode Background Overrides --- */
-body.dark-mode .kpi-blue, [data-bs-theme="dark"] .kpi-blue { background-color: #E59934 !important; }
-body.dark-mode .kpi-green, [data-bs-theme="dark"] .kpi-green { background-color: #198754 !important; }
-body.dark-mode .kpi-cyan, [data-bs-theme="dark"] .kpi-cyan { background-color: #722F99 !important; }
-body.dark-mode .kpi-dark, [data-bs-theme="dark"] .kpi-dark { background-color: #2b3035 !important; }
-body.dark-mode .kpi-grey, [data-bs-theme="dark"] .kpi-grey { background-color: #6c757d !important; }
-body.dark-mode .kpi-red, [data-bs-theme="dark"] .kpi-red { background-color: #dc3545 !important; }
-
-/* ==========================================================================
-   GLOBAL BACKGROUND & SPACE GAP FIX
-   ========================================================================== */
-html, body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    background-color: var(--bg-main, #f8f9fa);
-}
-
-/* Ensure Dark Mode background covers full viewport height without white space */
-body.dark-mode, 
-[data-bs-theme="dark"], 
-[data-bs-theme="dark"] body {
-    background-color: #121212 !important;
-    color: #e0e0e0 !important;
-}
-
-/* Wrapper layout fill */
-#wrapper {
-    display: flex;
-    min-height: calc(100vh - 56px);
-    background-color: inherit;
-}
-
-main, .main-content {
-    flex: 1;
-    min-height: calc(100vh - 56px);
-    background-color: inherit;
-}
-
-/* ==========================================================================
-   REPORT.HTML KPI CARDS FIX (ZERO HTML MODIFICATIONS NEEDED)
-   ========================================================================== */
-
-/* General Card Styling */
-.card.kpi, 
-.kpi {
-    border: none !important;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08) !important;
-}
-
-/* --------------------------------------------------------------------------
-   1. SALES REVENUE (Vibrant Blue)
-   -------------------------------------------------------------------------- */
-div[class*="col"]:nth-child(1) .card.kpi,
-div[class*="col"]:nth-child(1) .kpi,
-.card.kpi:nth-child(1) {
-    background-color: #0B1849 !important;
-}
-
-div[class*="col"]:nth-child(1) .card.kpi *,
-div[class*="col"]:nth-child(1) .kpi * {
-    color: #ffffff !important;
-}
-
-div[class*="col"]:nth-child(1) .card.kpi .text-muted,
-div[class*="col"]:nth-child(1) .card.kpi small {
-    color: rgba(255, 255, 255, 0.85) !important;
-}
-
-/* --------------------------------------------------------------------------
-   2. ESTIMATED COST (Slate Grey)
-   -------------------------------------------------------------------------- */
-div[class*="col"]:nth-child(2) .card.kpi,
-div[class*="col"]:nth-child(2) .kpi,
-.card.kpi:nth-child(2) {
-    background-color: #6c757d !important;
-}
-
-div[class*="col"]:nth-child(2) .card.kpi *,
-div[class*="col"]:nth-child(2) .kpi * {
-    color: #ffffff !important;
-}
-
-div[class*="col"]:nth-child(2) .card.kpi .text-muted,
-div[class*="col"]:nth-child(2) .card.kpi small {
-    color: rgba(255, 255, 255, 0.85) !important;
-}
-
-/* --------------------------------------------------------------------------
-   3. TOTAL DISCOUNT (Amber Yellow)
-   -------------------------------------------------------------------------- */
-div[class*="col"]:nth-child(3) .card.kpi,
-div[class*="col"]:nth-child(3) .kpi,
-.card.kpi:nth-child(3) {
-    background-color: #ffc107 !important;
-}
-
-div[class*="col"]:nth-child(3) .card.kpi *,
-div[class*="col"]:nth-child(3) .kpi * {
-    color: #000000 !important;
-}
-
-div[class*="col"]:nth-child(3) .card.kpi .text-muted,
-div[class*="col"]:nth-child(3) .card.kpi small {
-    color: rgba(0, 0, 0, 0.75) !important;
-}
-
-/* --------------------------------------------------------------------------
-   4. ESTIMATED PROFIT (Forest Green)
-   -------------------------------------------------------------------------- */
-div[class*="col"]:nth-child(4) .card.kpi,
-div[class*="col"]:nth-child(4) .kpi,
-.card.kpi:nth-child(4) {
-    background-color: #198754 !important;
-}
-
-div[class*="col"]:nth-child(4) .card.kpi *,
-div[class*="col"]:nth-child(4) .kpi * {
-    color: #ffffff !important;
-}
-
-div[class*="col"]:nth-child(4) .card.kpi .text-muted,
-div[class*="col"]:nth-child(4) .card.kpi small {
-    color: rgba(255, 255, 255, 0.85) !important;
-}
-
-/* ==========================================================================
-   REPORT PAGE ONLY - KPI CARD COLORS
-   (Strictly isolated to report.html; does NOT affect any other page)
-   ========================================================================== */
-
-/* 1. SALES REVENUE (Vibrant Blue) */
-body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(1) .card,
-body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(1) [class*="card"] {
-    background-color: #722F99 !important;
-    background: #722F99 !important;
-    color: #ffffff !important;
-}
-body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(1) .card * {
-    color: #ffffff !important;
-}
-
-/* 2. ESTIMATED COST (Slate Grey) */
-body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(2) .card,
-body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(2) [class*="card"] {
-    background-color: #6c757d !important;
-    background: #6c757d !important;
-    color: #ffffff !important;
-}
-body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(2) .card * {
-    color: #ffffff !important;
-}
-
-/* 3. TOTAL DISCOUNT (Amber Yellow) */
-body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(3) .card,
-body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(3) [class*="card"] {
-    background-color: #ffc107 !important;
-    background: #ffc107 !important;
-    color: #000000 !important;
-}
-body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(3) .card * {
-    color: #000000 !important;
-}
-body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(3) .card small,
-body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(3) .card .text-muted {
-    color: rgba(0, 0, 0, 0.75) !important;
-}
-
-/* 4. ESTIMATED PROFIT (Forest Green) */
-body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(4) .card,
-body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(4) [class*="card"] {
-    background-color: #198754 !important;
-    background: #198754 !important;
-    color: #ffffff !important;
-}
-body:has(a.active[href*="report" i]) .row:has(.bg-primary) > div:nth-child(4) .card * {
-    color: #ffffff !important;
-}
-
-/* ==========================================================================
-   FINAL SIDEBAR TOGGLE FIX
-   The hamburger button now completely hides the sidebar instead of leaving
-   the navigation text/icons visible in a narrow 70px strip.
-   ========================================================================== */
-
-/* Hidden state: remove the sidebar from the flex layout completely. */
-body.sidebar-collapsed #sidebarMenu,
-body.sidebar-collapsed #sidebar,
-body.sidebar-collapsed .sidebar {
-    width: 0 !important;
-    min-width: 0 !important;
-    max-width: 0 !important;
-    flex: 0 0 0 !important;
-    padding: 0 !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    border: 0 !important;
-    overflow: hidden !important;
-    opacity: 0;
-}
-
-/* Hide every sidebar child so text cannot spill into the main content. */
-body.sidebar-collapsed #sidebarMenu > *,
-body.sidebar-collapsed #sidebar > *,
-body.sidebar-collapsed .sidebar > * {
-    display: none !important;
-}
-
-/* Main content automatically uses the complete available width. */
-body.sidebar-collapsed #wrapper {
-    width: 100% !important;
-}
-
-body.sidebar-collapsed #wrapper > main,
-body.sidebar-collapsed #wrapper > .main-content,
-body.sidebar-collapsed .main-content,
-body.sidebar-collapsed .report-main-content {
-    width: 100% !important;
-    max-width: none !important;
-    flex: 1 1 100% !important;
-    min-width: 0 !important;
-}
-
-/* Smooth transition for the sidebar and page content. */
-#sidebarMenu,
-#sidebar,
-.sidebar {
-    transition:
-        width 0.25s ease,
-        min-width 0.25s ease,
-        max-width 0.25s ease,
-        flex-basis 0.25s ease,
-        opacity 0.2s ease,
-        padding 0.25s ease,
-        margin 0.25s ease !important;
-}
-
-/* Keep the hamburger above the page content. */
-#sidebarToggle,
-#btnToggleSidebar {
-    position: relative;
-    z-index: 2000;
-}
-
-/* ============================================================
-   SHOP LOGO + ADMIN NAME IN TOP NAVBAR
-   ============================================================ */
-
-.header-shop-profile {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 10px;
-    min-width: 0;
-    margin-left: auto;
-    padding-left: 12px;
-}
-
-.header-admin-name {
-    color: #ffffff;
-    font-size: 14px;
-    font-weight: 600;
-    white-space: nowrap;
-    max-width: 180px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.header-shop-logo-wrap {
-    width: 42px;
-    height: 42px;
-    min-width: 42px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 8px;
-    overflow: hidden;
-
-    background: rgba(255,255,255,0.12);
-    border: 1px solid rgba(255,255,255,0.35);
-}
-
-.header-shop-logo {
-    width: 100%;
-    height: 100%;
-
-    display: none;
-
-    object-fit: contain;
-    background: #ffffff;
-}
-
-.header-shop-logo-fallback {
-    color: #ffffff;
-    font-size: 21px;
-}
-
-@media (max-width: 576px) {
-
-    .header-admin-name {
-        max-width: 120px;
-        font-size: 13px;
-    }
-
-    .header-shop-logo-wrap {
-        width: 36px;
-        height: 36px;
-        min-width: 36px;
-    }
-}
-
-/* ============================================================
-   FIX: KEEP "MyShop Manager" ON THE LEFT
-   ============================================================ */
-
-nav.navbar.fixed-top > .container-fluid {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    flex-wrap: nowrap !important;
-}
-
-/* Hamburger stays at the far left */
-nav.navbar.fixed-top > .container-fluid > #sidebarToggle {
-    flex: 0 0 auto !important;
-    margin-left: 0 !important;
-    margin-right: 0.5rem !important;
-}
-
-/* MyShop Manager stays immediately after hamburger */
-nav.navbar.fixed-top > .container-fluid > .navbar-brand {
-    position: static !important;
-    order: 0 !important;
-    margin-left: 0 !important;
-    margin-right: auto !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    float: none !important;
-    transform: none !important;
-}
-
-/* Right-side profile stays on the right */
-nav.navbar.fixed-top > .container-fluid > .header-shop-profile,
-nav.navbar.fixed-top > .container-fluid > .ms-auto {
-    flex: 0 0 auto !important;
-    margin-left: auto !important;
-}
-
-/* Prevent other rules from moving the brand */
-nav.navbar.fixed-top .navbar-brand {
-    left: auto !important;
-    right: auto !important;
-    inset-inline-start: auto !important;
-    inset-inline-end: auto !important;
-}
-
-/* Mobile */
-@media (max-width: 576px) {
-    nav.navbar.fixed-top > .container-fluid > .navbar-brand {
-        margin-left: 0 !important;
-        margin-right: auto !important;
-        white-space: nowrap !important;
-    }
-}
-
-/* =========================================================
-   DASHBOARD - RECENT TRANSACTIONS ONLY
-   ========================================================= */
-
+/* Recent transactions: full-width, no wrapping, compact action column */
 .dashboard-recent-transactions {
     width: 100%;
     max-width: 100%;
@@ -1018,7 +748,7 @@ nav.navbar.fixed-top .navbar-brand {
     overflow: hidden;
 }
 
-.dashboard-recent-transactions > .card {
+.dashboard-recent-transactions .card {
     width: 100%;
     max-width: 100%;
     margin: 0;
@@ -1043,9 +773,649 @@ nav.navbar.fixed-top .navbar-brand {
     white-space: nowrap;
 }
 
-/* Keep action column compact */
 .dashboard-recent-transactions th:last-child,
 .dashboard-recent-transactions td:last-child {
     width: 80px;
     text-align: right;
+}
+
+/* "Live" refresh badge spinner */
+.live-spinner {
+    width: 0.5rem;
+    height: 0.5rem;
+}
+
+/* Round "+" button in the New Stock Added card */
+.btn-add-stock {
+    width: 30px;
+    height: 30px;
+}
+
+/* Chart containers (Chart.js needs a fixed-height, relative parent) */
+.chart-card-body {
+    position: relative;
+    height: 280px;
+}
+
+
+/* ==========================================================================
+   10. PAGE: BILLING
+   ========================================================================== */
+
+/* ---- 10a. POS counter ---------------------------------------------------- */
+
+/* Scrollable product grid */
+.product-grid-scroll {
+    max-height: 420px;
+}
+
+/* Discount amount field in Payment Summary */
+.discount-input {
+    width: 100px;
+}
+
+/* Round green "add" button on product cards */
+.product-card .btn-add,
+.product-card .add-btn,
+.product-card .btn-outline-secondary,
+.product-card .btn-outline-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background-color: #198754 !important;
+    border-color: #198754 !important;
+    border-radius: 50%;
+    color: #ffffff !important;
+}
+
+.product-card .btn-add:hover,
+.product-card .add-btn:hover,
+.product-card .btn-outline-secondary:hover,
+.product-card .btn-outline-primary:hover {
+    background-color: #157347 !important;
+    border-color: #157347 !important;
+}
+
+/* ---- 10b. Payment overlay (moved from billing.html) ---------------------- */
+/* ── PAYMENT MODAL OVERLAY ───────────────────────────────────── */
+        #paymentOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15,23,42,0.72);
+            z-index: 1060;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+        }
+        #paymentOverlay.active { display: flex; }
+
+        .pay-modal {
+            background: #fff;
+            border-radius: 18px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 92vh;
+            overflow-y: auto;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.30);
+            animation: slideUp .25s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(40px); opacity: 0; }
+            to   { transform: translateY(0);    opacity: 1; }
+        }
+
+        /* ── MODAL HEADER ────────────────────────────────────────────── */
+        .pay-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px 16px;
+            border-bottom: 1px solid #e8edf3;
+        }
+        .pay-header h5 { margin: 0; font-weight: 700; font-size: 1.05rem; }
+        .pay-close {
+            background: none; border: none; cursor: pointer;
+            font-size: 1.3rem; color: #64748b; line-height: 1;
+            padding: 4px 8px; border-radius: 8px;
+            transition: background .15s;
+        }
+        .pay-close:hover { background: #f1f5f9; }
+
+        /* ── AMOUNT BANNER ───────────────────────────────────────────── */
+        .pay-amount-banner {
+            background: linear-gradient(135deg, #2a8b3d 0%, #308213 100%);
+            margin: 16px 24px;
+            border-radius: 14px;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #fff;
+        }
+        .pay-amount-banner .label { font-size: 12px; opacity: .85; font-weight: 500; letter-spacing: .04em; }
+        .pay-amount-banner .amount { font-size: 2rem; font-weight: 800; letter-spacing: -.02em; }
+        .pay-amount-banner .customer { font-size: 13px; opacity: .9; margin-top: 2px; }
+
+        /* ── METHOD TABS ─────────────────────────────────────────────── */
+        .pay-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 0 24px;
+            margin-bottom: 16px;
+        }
+        .pay-tab-btn {
+            flex: 1;
+            padding: 10px 8px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            background: #f8fafc;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: #64748b;
+            transition: all .18s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .pay-tab-btn i { font-size: 1.3rem; }
+        .pay-tab-btn:hover { border-color: #94a3b8; background: #f1f5f9; }
+        .pay-tab-btn.active {
+            border-color: #D96868;
+            background: #eff6ff;
+            color: #D96868;
+        }
+        .pay-tab-btn.active-upi  { border-color: #7c3aed; background: #f5f3ff; color: #7c3aed; }
+        .pay-tab-btn.active-card { border-color: #059669; background: #ecfdf5; color: #059669; }
+
+        /* ── PANEL BODY ──────────────────────────────────────────────── */
+        .pay-panel { padding: 0 24px 8px; }
+
+        /* ── CASH PANEL ──────────────────────────────────────────────── */
+        .cash-info-box {
+            background: #f0fdf4;
+            border: 1.5px solid #bbf7d0;
+            border-radius: 12px;
+            padding: 18px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        .cash-info-box i { font-size: 2.5rem; color: #16a34a; }
+        .cash-info-box p { margin: 8px 0 0; color: #166534; font-weight: 600; }
+
+        /* ── UPI PANEL ───────────────────────────────────────────────── */
+        .upi-qr-box {
+            border: 2px dashed #c4b5fd;
+            border-radius: 14px;
+            padding: 20px;
+            text-align: center;
+            background: #faf5ff;
+            margin-bottom: 16px;
+            position: relative;
+        }
+        .upi-qr-box img {
+            max-width: 180px;
+            max-height: 180px;
+            border-radius: 8px;
+            border: 1px solid #ddd6fe;
+        }
+        .upi-qr-placeholder {
+            width: 150px; height: 150px;
+            background: #ede9fe;
+            border-radius: 12px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            margin: 0 auto 10px;
+            color: #7c3aed;
+        }
+        .upi-qr-placeholder i { font-size: 3rem; }
+        .upi-id-badge {
+            display: inline-block;
+            background: #fff;
+            border: 1.5px solid #c4b5fd;
+            border-radius: 8px;
+            padding: 4px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #6d28d9;
+            margin-top: 8px;
+        }
+        .upi-apps {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            margin: 12px 0;
+        }
+        .upi-app-chip {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        /* ── CARD PANEL ──────────────────────────────────────────────── */
+        .card-machine-box {
+            background: #f0fdf4;
+            border: 2px solid #bbf7d0;
+            border-radius: 14px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        .card-machine-box i { font-size: 3rem; color: #059669; }
+        .card-machine-box p { font-weight: 600; color: #065f46; margin: 8px 0 4px; }
+        .card-machine-box small { color: #047857; font-size: 12px; }
+
+        /* ── FORM FIELDS ─────────────────────────────────────────────── */
+        .pay-field-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            margin-bottom: 5px;
+        }
+        .pay-input {
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 14px;
+            width: 100%;
+            outline: none;
+            transition: border-color .15s;
+            font-family: inherit;
+        }
+        .pay-input:focus { border-color: #0d6efd; box-shadow: 0 0 0 3px rgba(13,110,253,.1); }
+
+        /* ── STATUS SELECTOR ─────────────────────────────────────────── */
+        .status-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .status-btn {
+            flex: 1;
+            padding: 8px 6px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            background: #f8fafc;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+            color: #64748b;
+            text-align: center;
+            transition: all .15s;
+        }
+        .status-btn.active-paid   { border-color: #16a34a; background: #f0fdf4; color: #15803d; }
+        .status-btn.active-pending{ border-color: #d97706; background: #fffbeb; color: #b45309; }
+        .status-btn.active-failed { border-color: #dc2626; background: #fef2f2; color: #b91c1c; }
+
+        /* ── CONFIRM BUTTON ──────────────────────────────────────────── */
+        .pay-confirm-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin: 16px 0 8px;
+            transition: all .18s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .pay-confirm-btn.btn-cash  { background: #16a34a; color: #fff; }
+        .pay-confirm-btn.btn-upi   { background: #7c3aed; color: #fff; }
+        .pay-confirm-btn.btn-card  { background: #059669; color: #fff; }
+        .pay-confirm-btn:hover     { filter: brightness(1.08); transform: translateY(-1px); }
+        .pay-confirm-btn:disabled  { opacity: .5; cursor: not-allowed; transform: none; }
+
+        /* ── SUCCESS SCREEN ──────────────────────────────────────────── */
+        .pay-success {
+            display: none;
+            text-align: center;
+            padding: 32px 24px;
+        }
+        .pay-success.active { display: block; }
+        .success-circle {
+            width: 80px; height: 80px;
+            background: #dcfce7;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 16px;
+            animation: popIn .3s ease;
+        }
+        @keyframes popIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to   { transform: scale(1);   opacity: 1; }
+        }
+        .success-circle i { font-size: 2.5rem; color: #16a34a; }
+        .pay-success h4 { font-weight: 800; margin-bottom: 6px; }
+        .pay-ref-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin: 16px 0;
+            text-align: left;
+        }
+        .pay-ref-box .ref-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+        .pay-ref-box .ref-row:last-child { margin: 0; }
+        .pay-ref-box .ref-label { color: #64748b; }
+        .pay-ref-box .ref-value { font-weight: 600; color: #1e293b; }
+
+        /* ── FAILED SCREEN ───────────────────────────────────────────── */
+        .pay-failed {
+            display: none;
+            text-align: center;
+            padding: 32px 24px;
+        }
+        .pay-failed.active { display: block; }
+        .failed-circle {
+            width: 80px; height: 80px;
+            background: #fee2e2;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 16px;
+        }
+        .failed-circle i { font-size: 2.5rem; color: #dc2626; }
+
+        /* ── DIVIDER ─────────────────────────────────────────────────── */
+        .pay-divider {
+            height: 1px; background: #f1f5f9;
+            margin: 12px 0;
+        }
+
+        /* ── SECURITY NOTE ───────────────────────────────────────────── */
+        .security-note {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: #94a3b8;
+            padding: 0 24px 16px;
+        }
+        .security-note i { font-size: 13px; color: #64748b; }
+    
+        /* Billing calculation model — uses existing theme/interface */
+        .billing-tax-note {
+            line-height: 1.45;
+        }
+
+/* ---- 10c. Payment popup in dark mode -------------------------------------- */
+/* The popup is a self-contained light card. Without these rules, text inside it
+   inherits the light dark-mode colours and becomes hard to read on white. */
+.pay-modal {
+    color: #212529;
+    color-scheme: light; /* keeps native inputs/selects light inside the popup */
+}
+
+body.dark-mode .pay-modal .text-muted,
+[data-bs-theme="dark"] .pay-modal .text-muted {
+    color: #6c757d !important;
+}
+
+/* ---- 10d. Payment overlay: classes that replaced inline styles ----------- */
+
+/* UPI / Card panels start hidden; billing.js reveals them by setting an inline
+   display value, which automatically overrides this rule. */
+.pay-panel-initially-hidden:not([style]) {
+    display: none;
+}
+
+.pay-banner-icon {
+    font-size: 2.8rem;
+    opacity: 0.3;
+}
+
+.cash-change-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f0fdf4;
+    border-radius: 10px;
+}
+
+.cash-change-label {
+    color: #166534;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.cash-change-value {
+    color: #16a34a;
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+
+.upi-business-name {
+    margin-top: 4px;
+    color: #6d28d9;
+    font-size: 12px;
+}
+
+.text-required {
+    color: #dc2626;
+}
+
+.pay-select {
+    cursor: pointer;
+}
+
+.pay-security-notice {
+    background: #fef3c7;
+    border: 1.5px solid #fde68a;
+    border-radius: 10px;
+    color: #92400e;
+    font-size: 12px;
+}
+
+.pay-message {
+    font-size: 14px;
+}
+
+.pay-confirm-btn.btn-new-bill {
+    margin-top: 8px;
+}
+
+.pay-confirm-btn.btn-retry {
+    background: #64748b;
+    color: #ffffff;
+}
+
+
+/* ==========================================================================
+   11. PAGE: PRODUCTS
+   ========================================================================== */
+
+/* ---- 11a. Stat cards (top row) ------------------------------------------- */
+/* The coloured background is applied to .card-body, as highlighted in the
+   design review. Colours reuse the Dashboard KPI palette. */
+.product-stat {
+    border-left: 4px solid var(--bs-primary);
+}
+
+.product-stat .card-body {
+    border-radius: inherit;
+}
+
+.card.product-stat .card-body,
+.card.product-stat .card-body * {
+    color: #ffffff !important;
+}
+
+.card.product-stat .card-body small {
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-weight: 500;
+}
+
+.product-stat-products .card-body { background-color: var(--kpi-orange) !important; }
+.product-stat-units .card-body    { background-color: var(--kpi-grey)   !important; }
+.product-stat-value .card-body    { background-color: var(--kpi-purple) !important; }
+.product-stat-alerts .card-body   { background-color: var(--kpi-red)    !important; }
+
+/* ---- 11b. Table, modal and form (moved from product.html) ---------------- */
+.product-stat { border-left: 4px solid var(--bs-primary); }
+        .product-table th { white-space: nowrap; }
+        .stock-badge { min-width: 92px; display: inline-block; text-align:center; }
+        .profit-preview { font-size:.9rem; }
+        .modal-xl { max-width: 1050px; }
+
+        .product-form-section {
+            background: var(--bs-light);
+            border: 1px solid rgba(0,0,0,.08);
+            border-radius: .75rem;
+            padding: 1rem;
+        }
+        .product-form-section-title {
+            font-weight: 700;
+            font-size: .95rem;
+            margin-bottom: .85rem;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+        .product-field-help {
+            display: block;
+            margin-top: .3rem;
+            color: #6c757d;
+            font-size: .76rem;
+            line-height: 1.35;
+        }
+        .product-calculation-note {
+            border-left: 3px solid var(--bs-primary);
+            background: rgba(var(--bs-primary-rgb), .06);
+            border-radius: .5rem;
+            padding: .7rem .85rem;
+            font-size: .8rem;
+            line-height: 1.45;
+        }
+        .product-preview-card {
+            border: 1px solid rgba(0,0,0,.08);
+            border-radius: .75rem;
+            background: #fff;
+            padding: .85rem;
+            height: 100%;
+        }
+        .product-preview-card .preview-label {
+            color: #6c757d;
+            font-size: .74rem;
+            margin-bottom: .15rem;
+        }
+        .product-preview-card .preview-value {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        .product-preview-card.preview-profit {
+            background: rgba(var(--bs-success-rgb), .07);
+            border-color: rgba(var(--bs-success-rgb), .2);
+        }
+        .product-preview-card.preview-loss {
+            background: rgba(var(--bs-danger-rgb), .07);
+            border-color: rgba(var(--bs-danger-rgb), .2);
+        }
+        .product-price-basis {
+            font-size: .73rem;
+            font-weight: 600;
+            color: #6c757d;
+        }
+        @media (max-width: 767.98px) {
+            .product-form-section { padding: .85rem; }
+            .product-preview-card .preview-value { font-size: .92rem; }
+        }
+
+/* ---- 11c. Dark-mode support for the Add/Edit product modal --------------- */
+body.dark-mode .product-form-section,
+[data-bs-theme="dark"] .product-form-section {
+    background: var(--surface-subtle);
+    border-color: var(--border-color);
+}
+
+body.dark-mode .product-preview-card,
+[data-bs-theme="dark"] .product-preview-card {
+    background: var(--surface-raised);
+    border-color: var(--border-color);
+}
+
+body.dark-mode .product-field-help,
+body.dark-mode .product-preview-card .preview-label,
+body.dark-mode .product-price-basis,
+[data-bs-theme="dark"] .product-field-help,
+[data-bs-theme="dark"] .product-preview-card .preview-label,
+[data-bs-theme="dark"] .product-price-basis {
+    color: #adb5bd;
+}
+
+
+/* ==========================================================================
+   12. PAGE: INVOICES
+   ========================================================================== */
+
+/* GST helper line under the item table */
+.invoice-gst-note {
+    font-size: 0.75rem;
+}
+
+/* Item table column widths in the invoice detail modal */
+.invoice-col-qty      { width: 70px; }
+.invoice-col-price    { width: 100px; }
+.invoice-col-gst      { width: 80px; }
+.invoice-col-discount { width: 100px; }
+.invoice-col-total    { width: 110px; }
+
+
+/* ==========================================================================
+   13. PAGE: REPORT
+   ========================================================================== */
+
+/* Explanatory note under report figures */
+.report-calculation-note {
+    font-size: 0.78rem;
+    line-height: 1.4;
+}
+
+
+/* ==========================================================================
+   14. PRINT
+   ========================================================================== */
+@media print {
+    .no-print,
+    .top-navbar,
+    nav.navbar,
+    .sidebar,
+    #sidebar,
+    #sidebarMenu,
+    .invoice-gst-note,
+    .report-calculation-note {
+        display: none !important;
+    }
+
+    body {
+        padding-top: 0 !important;
+        background-color: #ffffff !important;
+        color: #000000 !important;
+    }
+
+    .main-content,
+    #wrapper main {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
 }
