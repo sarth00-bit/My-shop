@@ -1,0 +1,453 @@
+/* ============================================================
+   settings.css — MyShop Manager Settings pages
+   Loaded AFTER style.css and BEFORE responsive.css.
+   Does NOT redefine the navbar or sidebar — those are now
+   identical to Dashboard/Billing/Products pages and handled
+   by style.css + responsive.css.
+   Dark mode: body.dark-mode / [data-bs-theme="dark"] (set by app.js + settings.js).
+   ============================================================ */
+
+:root {
+  --settings-card:   #ffffff;
+  --settings-text:   #212529;
+  --settings-muted:  #6c757d;
+  --settings-border: #dee2e6;
+  --settings-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+
+/* ── Page title block (directly inside <main>) ─────────────
+   Remove the huge top padding that was causing the red-boxed
+   empty space. The <main> already has p-4 (1.5 rem) from
+   Bootstrap + body has padding-top:56px from style.css.     */
+.settings-page-title {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+.settings-eyebrow {
+  font-size: 11px;
+  letter-spacing: .08em;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--settings-muted);
+}
+
+.settings-page-title h2 {
+  margin: 2px 0 3px;
+  font-size: 24px;
+  font-weight: 750;
+}
+
+.settings-page-title p {
+  margin: 0;
+  color: var(--settings-muted);
+  font-size: 13px;
+}
+
+/* ── Settings tabs ─────────────────────────────────────────── */
+.settings-tabs {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  width: 100%;
+  background: var(--settings-card);
+  border: 1px solid var(--settings-border);
+  border-radius: 8px 8px 0 0;
+  box-shadow: var(--settings-shadow);
+}
+.settings-tabs::-webkit-scrollbar { display: none; }
+
+.settings-tab {
+  flex: 0 0 auto;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: var(--settings-card);
+  color: var(--settings-muted) !important;
+  text-decoration: none !important;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: color .15s, border-color .15s;
+}
+.settings-tab:hover { color: var(--settings-text) !important; background: rgba(127,127,127,.05); }
+.settings-tab.active { color: var(--settings-text) !important; border-bottom-color: #0d6efd; }
+.tab-lock { font-size: 9px; opacity: .7; }
+
+/* On very small phones: icons only */
+@media (max-width: 480px) {
+  .settings-tab span { display: none !important; }
+  .settings-tab { padding: 12px 10px; gap: 0; }
+}
+
+/* ── Content card ─────────────────────────────────────────── */
+.settings-content-card {
+  width: 100%;
+  background: var(--settings-card);
+  border: 1px solid var(--settings-border);
+  border-top: 0;
+  border-radius: 0 0 8px 8px;
+  box-shadow: var(--settings-shadow);
+  overflow: hidden;
+}
+
+/* ── Section toolbar ────────────────────────────────────────── */
+.section-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--settings-border);
+  flex-wrap: wrap;
+}
+.section-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--settings-muted);
+  margin-bottom: 2px;
+}
+.section-toolbar h2 { margin: 0 0 3px; font-size: 18px; font-weight: 750; }
+.section-toolbar p  { margin: 0; color: var(--settings-muted); font-size: 13px; }
+
+@media (max-width: 575px) {
+  .section-toolbar { flex-direction: column; }
+  .section-toolbar .btn { width: 100%; }
+}
+
+/* ── Settings block ─────────────────────────────────────────── */
+.settings-block {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--settings-border);
+}
+.settings-block:last-child { border-bottom: 0; }
+.settings-block h3 { margin: 0 0 14px; font-size: 14px; font-weight: 750; color: var(--settings-text); }
+
+/* ── Two-column form grid ───────────────────────────────────── */
+.settings-form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(220px, 1fr);
+  gap: 0;
+}
+.settings-form-grid > .settings-block {
+  border-right: 1px solid var(--settings-border);
+}
+.settings-form-grid > .settings-block:last-child {
+  border-right: 0;
+}
+@media (max-width: 860px) {
+  .settings-form-grid { grid-template-columns: 1fr; }
+  .settings-form-grid > .settings-block { border-right: 0; }
+}
+
+/* ── Field grid (2 columns inside a block) ──────────────────── */
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.field-full { grid-column: 1 / -1; }
+.field label { display: block; margin-bottom: 5px; font-size: 12px; font-weight: 700; }
+@media (max-width: 600px) { .field-grid { grid-template-columns: 1fr; } }
+
+/* Prevent iOS zoom */
+@media (max-width: 767px) {
+  .form-control, .form-select { font-size: 16px !important; }
+}
+
+/* ── Switch / toggle rows ───────────────────────────────────── */
+.switch-grid { display: grid; }
+.setting-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--settings-border);
+  cursor: pointer;
+}
+.setting-switch:last-child { border-bottom: 0; }
+.setting-switch b     { display: block; font-size: 13px; }
+.setting-switch small { display: block; margin-top: 2px; color: var(--settings-muted); font-size: 11px; }
+.setting-switch input[type="checkbox"] { width: 18px; height: 18px; flex-shrink: 0; cursor: pointer; accent-color: #0d6efd; }
+
+/* ── Check grid (invoice options) ───────────────────────────── */
+.check-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+  gap: 10px 20px;
+}
+.check-grid label { display: flex; align-items: center; gap: 7px; font-size: 13px; cursor: pointer; }
+.check-grid input[type="checkbox"] { width: 16px; height: 16px; accent-color: #0d6efd; }
+
+/* ── Logo / QR upload area ─────────────────────────────────── */
+.logo-upload-area { display: flex; flex-direction: column; gap: 8px; padding: 4px 0; }
+
+/* Fixed-size preview box — not huge like before */
+.logo-preview-box {
+  width: 100%;
+  height: 140px;          /* ← was unconstrained; now fixed compact height */
+  max-height: 140px;
+  border: 1px dashed var(--settings-border);
+  border-radius: 8px;
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  text-align: center;
+  color: var(--settings-muted);
+}
+.logo-preview-box img {
+  max-width: 100%;
+  max-height: 130px;
+  object-fit: contain;
+  display: none;
+}
+.logo-preview-box img[src]:not([src=""]) { display: block; }
+
+/* Taller preview box for the UPI QR code (Payment page) */
+.qr-preview-box { min-height: 180px; }
+
+/* ── Health grid ────────────────────────────────────────────── */
+.health-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (max-width: 860px) { .health-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .health-grid { grid-template-columns: 1fr; } }
+
+.health-item {
+  padding: 13px 14px;
+  border: 1px solid var(--settings-border);
+  border-radius: 7px;
+  background: var(--settings-card);
+}
+.health-item span { display: block; color: var(--settings-muted); font-size: 11px; }
+.health-item b    { display: block; margin-top: 5px; font-size: 13px; }
+.health-item.ok   b { color: #198754; }
+.health-item.error b { color: #dc3545; }
+
+/* ── Private page lock ─────────────────────────────────────── */
+.private-page-lock { padding: 50px 20px; text-align: center; }
+.big-lock {
+  width: 54px; height: 54px; margin: 0 auto 12px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; background: rgba(13,110,253,.10); color: #0d6efd; font-size: 22px;
+}
+.private-page-lock h3 { margin-bottom: 6px; }
+.private-page-lock p  { color: var(--settings-muted); font-size: 13px; }
+.private-icon { font-size: 26px; color: #0d6efd; }
+
+/* ── Banners / notes ────────────────────────────────────────── */
+.private-banner, .settings-note {
+  margin: 12px 20px;
+  padding: 9px 12px;
+  border-radius: 7px;
+  font-size: 12px;
+}
+.private-banner {
+  background: rgba(25,135,84,.09);
+  border: 1px solid rgba(25,135,84,.28);
+}
+.settings-note {
+  background: rgba(13,110,253,.07);
+  border: 1px solid rgba(13,110,253,.18);
+}
+.danger-zone { border-left: 3px solid #dc3545 !important; }
+
+.action-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+@media (max-width: 480px) {
+  .action-row { flex-direction: column; }
+  .action-row .btn { width: 100%; }
+}
+
+/* ── Toast ─────────────────────────────────────────────────── */
+.settings-toast {
+  position: fixed; right: 20px; bottom: 20px; z-index: 4000;
+  min-width: 220px; max-width: 360px;
+  padding: 11px 14px; border-radius: 7px;
+  background: #1e2022; color: #fff;
+  box-shadow: 0 8px 24px rgba(0,0,0,.2);
+  font-size: 13px;
+  opacity: 0; transform: translateY(8px); pointer-events: none;
+  transition: .2s ease;
+}
+.settings-toast.show    { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.settings-toast.error   { border-left: 4px solid #dc3545; }
+.settings-toast.success { border-left: 4px solid #198754; }
+@media (max-width: 480px) {
+  .settings-toast { right: 10px; bottom: 10px; left: 10px; max-width: calc(100vw - 20px); }
+}
+
+/* ── Dark mode ─────────────────────────────────────────────── */
+body.dark-mode,
+[data-bs-theme="dark"] {
+  --settings-card:   #1e1e1e;
+  --settings-text:   #e9ecef;
+  --settings-muted:  #adb5bd;
+  --settings-border: #343a40;
+}
+
+body.dark-mode .settings-tabs,
+body.dark-mode .settings-tab,
+body.dark-mode .settings-content-card,
+body.dark-mode .settings-block,
+body.dark-mode .section-toolbar,
+[data-bs-theme="dark"] .settings-tabs,
+[data-bs-theme="dark"] .settings-tab,
+[data-bs-theme="dark"] .settings-content-card,
+[data-bs-theme="dark"] .settings-block,
+[data-bs-theme="dark"] .section-toolbar {
+  background: var(--settings-card) !important;
+  color: var(--settings-text) !important;
+  border-color: var(--settings-border) !important;
+}
+
+body.dark-mode .settings-tab,
+[data-bs-theme="dark"] .settings-tab { color: var(--settings-muted) !important; }
+body.dark-mode .settings-tab.active,
+[data-bs-theme="dark"] .settings-tab.active { color: #fff !important; border-bottom-color: #6ea8fe; }
+
+body.dark-mode .logo-preview-box,
+[data-bs-theme="dark"] .logo-preview-box { background: #181818; border-color: #495057; }
+
+body.dark-mode .health-item,
+[data-bs-theme="dark"] .health-item { background: #181818; border-color: #495057; }
+
+body.dark-mode .section-label,
+[data-bs-theme="dark"] .section-label { color: var(--settings-muted); }
+
+body.dark-mode .settings-page-title p,
+body.dark-mode .section-toolbar p,
+[data-bs-theme="dark"] .settings-page-title p,
+[data-bs-theme="dark"] .section-toolbar p { color: var(--settings-muted) !important; }
+
+/* ── Compact density ────────────────────────────────────────── */
+body.settings-compact .settings-tab   { padding-top: 9px !important; padding-bottom: 9px !important; }
+body.settings-compact .settings-block { padding-top: 13px !important; padding-bottom: 13px !important; }
+body.settings-compact .section-toolbar { padding-top: 13px !important; padding-bottom: 13px !important; }
+body.settings-compact .setting-switch  { padding-top: 9px !important; padding-bottom: 9px !important; }
+
+/* ============================================================
+   TAX SETTINGS — GST ALIGNMENT
+   Matches the existing MyShop Manager settings interface.
+   ============================================================ */
+
+.tax-settings-card .tax-help {
+  display:block;
+  margin-top:5px;
+  color:var(--settings-muted);
+  font-size:11px;
+  line-height:1.4;
+}
+
+.tax-settings-card .tax-enabled-switch {
+  min-height:38px;
+  padding:8px 0;
+  border-bottom:0;
+}
+
+.gst-split-preview {
+  margin-top:16px;
+  padding:14px;
+  border:1px solid var(--settings-border);
+  border-radius:8px;
+  background:rgba(13,110,253,.035);
+}
+
+.gst-split-heading {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+}
+
+.gst-split-heading span {
+  font-size:13px;
+  font-weight:750;
+  color:var(--settings-text);
+}
+
+.gst-split-heading small {
+  color:var(--settings-muted);
+  font-size:11px;
+  text-align:right;
+}
+
+.gst-split-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.gst-split-item {
+  padding:12px 14px;
+  border:1px solid var(--settings-border);
+  border-radius:7px;
+  background:var(--settings-card);
+}
+
+.gst-split-item span {
+  display:block;
+  color:var(--settings-muted);
+  font-size:11px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+
+.gst-split-item strong {
+  display:block;
+  margin-top:3px;
+  color:var(--settings-text);
+  font-size:18px;
+}
+
+.tax-rule-box {
+  padding:11px 13px;
+  border:1px solid var(--settings-border);
+  border-radius:7px;
+  background:var(--settings-card);
+  color:var(--settings-text);
+  font-size:12px;
+  line-height:1.8;
+}
+
+.tax-rule-box i {
+  color:#198754;
+  margin-right:5px;
+}
+
+.tax-settings-note {
+  margin-top:0;
+}
+
+body.dark-mode .gst-split-preview,
+[data-bs-theme="dark"] .gst-split-preview {
+  background:rgba(110,168,254,.06);
+}
+
+body.dark-mode .gst-split-item,
+[data-bs-theme="dark"] .gst-split-item,
+body.dark-mode .tax-rule-box,
+[data-bs-theme="dark"] .tax-rule-box {
+  background:var(--settings-card);
+}
+
+@media (max-width:600px) {
+  .gst-split-grid { grid-template-columns:1fr; }
+  .gst-split-heading { flex-direction:column; }
+  .gst-split-heading small { text-align:left; }
+}
