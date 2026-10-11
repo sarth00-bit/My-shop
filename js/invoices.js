@@ -1,14 +1,27 @@
 // =========================================
-// invoices.js — uses config.js for API URL
-// NODE_API comes from config.js
+// INVOICES.JS — fixed historical invoice view
+// Reads invoice/sale data from MySQL through
+// the Node.js API configured in config.js. No LocalStorage used.
 // =========================================
+
+// NODE_API and apiFetch are provided by config.js.
+const API = window.NODE_API;
+const request = window.apiFetch || window.fetch.bind(window);
+
+if (!API) {
+    console.error('NODE_API is not available. Load config.js before invoices.js.');
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
 
+    // =========================================
+    // DOM ELEMENTS
+    // =========================================
     const invoicesTableBody   = document.getElementById('invoicesTableBody');
     const searchInput         = document.getElementById('searchInvoiceInput');
     const filterPaymentMethod = document.getElementById('filterPaymentMethod');
 
+    // Modal elements already present in invoices.html
     const modalInvoiceNo      = document.getElementById('modalInvoiceNo');
     const modalInvoiceDate    = document.getElementById('modalInvoiceDate');
     const modalCustName       = document.getElementById('modalCustName');
@@ -16,59 +29,114 @@ document.addEventListener('DOMContentLoaded', async () => {
     const modalPaymentMethod  = document.getElementById('modalPaymentMethod');
     const modalInvoiceItems   = document.getElementById('modalInvoiceItems');
     const modalSubtotal       = document.getElementById('modalSubtotal');
+    const modalCGST           = document.getElementById('modalCGST');
+    const modalSGST           = document.getElementById('modalSGST');
     const modalGST            = document.getElementById('modalGST');
     const modalDiscount       = document.getElementById('modalDiscount');
+    const modalAmountReceived = document.getElementById('modalAmountReceived');
+    const modalChangeAmount   = document.getElementById('modalChangeAmount');
     const modalGrandTotal     = document.getElementById('modalGrandTotal');
-    const modalAmountReceived  = document.getElementById('modalAmountReceived');
-    const modalChangeAmount    = document.getElementById('modalChangeAmount');
-    const cashReceivedRow      = document.getElementById('cashReceivedRow');
-    const cashChangeRow        = document.getElementById('cashChangeRow');
     const btnPrintInvoice     = document.getElementById('btnPrintInvoice');
 
     let allInvoices = [];
     let bsModal = null;
-    let modalReturnFocus = null;
 
-    function fmt(val) {
-        const n = parseFloat(val);
-        return isNaN(n) ? '0.00' : n.toFixed(2);
+    // =========================================
+    // HELPERS
+    // =========================================
+    function num(value, fallback = 0) {
+        const n = Number.parseFloat(value);
+        return Number.isFinite(n) ? n : fallback;
     }
 
-    function formatDateTime(isoStr) {
-        if (!isoStr) return '—';
-        const dt = new Date(isoStr);
-        return isNaN(dt) ? isoStr : dt.toLocaleString('en-IN', {
-            day: 'numeric', month: 'short', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-        });
+    function fmt(value) {
+        return num(value).toFixed(2);
     }
 
-    // ── 1. LOAD INVOICES ──────────────────────────────────────────────────────
+    function formatDateTime(value) {
+        if (!value) return '—';
+
+        const dt = new Date(value);
+        return Number.isNaN(dt.getTime())
+            ? String(value)
+            : dt.toLocaleString('en-IN', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+    }
+
+    // Values inserted into innerHTML are escaped so product/customer text
+    // cannot accidentally become HTML.
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function paymentBadgeClass(method) {
+        const value = String(method || '').toLowerCase();
+        if (value === 'cash') return 'bg-success';
+        if (value === 'upi') return 'bg-primary';
+        if (value === 'card') return 'bg-warning text-dark';
+        return 'bg-info text-dark';
+    }
+
+    // =========================================
+    // 1. LOAD ALL INVOICES FROM MYSQL
+    // =========================================
     async function loadInvoices() {
         showTableLoading();
+
         try {
-            const res = await apiFetch(`${NODE_API}/sales`);
-            if (!res.ok) throw new Error(`Server error ${res.status}`);
-            allInvoices = await res.json();
+            const res = await request(`${API}/sales`);
+            const data = await res.json().catch(() => null);
+
+            if (!res.ok) {
+                throw new Error(data?.error || `Server error ${res.status}`);
+            }
+
+            if (!Array.isArray(data)) {
+                throw new Error('Invalid invoice data received from server.');
+            }
+
+            allInvoices = data;
             applyFiltersAndRender();
         } catch (err) {
             console.error('Failed to load invoices:', err);
-            showTableError(err.message);
+            showTableError(err.message || 'Unable to load invoices.');
         }
     }
 
-    // ── 2. FILTER + RENDER ────────────────────────────────────────────────────
+    // =========================================
+    // 2. FILTER + RENDER INVOICE HISTORY
+    // =========================================
     function applyFiltersAndRender() {
-        const query        = (searchInput?.value || '').toLowerCase().trim();
-        const methodFilter = (filterPaymentMethod?.value || '').toLowerCase();
+        const query = (searchInput?.value || '').toLowerCase().trim();
+        const methodFilter = (filterPaymentMethod?.value || '').toLowerCase().trim();
 
         const filtered = allInvoices.filter(inv => {
-            const matchesSearch =
-                String(inv.id).includes(query) ||
-                (inv.customer_name || '').toLowerCase().includes(query);
+            const searchable = [
+                inv.id,
+                inv.invoice_number,
+                inv.customer_name,
+                inv.customer_phone,
+                inv.phone
+            ]
+                .filter(value => value !== null && value !== undefined)
+                .join(' ')
+                .toLowerCase();
+
+            const matchesSearch = !query || searchable.includes(query);
             const matchesMethod =
                 !methodFilter ||
-                (inv.payment_method || '').toLowerCase() === methodFilter;
+                String(inv.payment_method || '').toLowerCase() === methodFilter;
+
             return matchesSearch && matchesMethod;
         });
 
@@ -80,195 +148,289 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (!list.length) {
             invoicesTableBody.innerHTML = `
-                <tr><td colspan="7" class="text-center text-muted py-4">
-                    <i class="bi bi-file-earmark-text display-6 d-block mb-2"></i>
-                    No invoices found.
-                </td></tr>`;
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">
+                        <i class="bi bi-file-earmark-text display-6 d-block mb-2"></i>
+                        No invoices found.
+                    </td>
+                </tr>`;
             return;
         }
 
-        invoicesTableBody.innerHTML = list.map(inv => `
-            <tr>
-                <td class="fw-bold text-primary">#INV-${inv.id}</td>
-                <td>${formatDateTime(inv.sale_date)}</td>
-                <td class="fw-semibold">${inv.customer_name || 'Walk-in Customer'}</td>
-                <td class="text-muted">—</td>
-                <td><span class="badge bg-info text-dark">${inv.payment_method || 'Cash'}</span></td>
-                <td class="fw-bold">₹${fmt(inv.total_amount)}</td>
-                <td class="text-end">
-                    <button class="btn btn-sm btn-outline-primary" onclick="viewInvoiceModal(${inv.id})">
-                        <i class="bi bi-eye me-1"></i>View
-                    </button>
-                </td>
-            </tr>`).join('');
+        invoicesTableBody.innerHTML = list.map(inv => {
+            const invoiceLabel = inv.invoice_number
+                ? escapeHtml(inv.invoice_number)
+                : `#INV-${escapeHtml(inv.id)}`;
+
+            const method = escapeHtml(inv.payment_method || 'Cash');
+            const badge = paymentBadgeClass(inv.payment_method);
+            const customer = escapeHtml(inv.customer_name || 'Walk-in Customer');
+
+            return `
+                <tr>
+                    <td class="fw-bold text-primary">${invoiceLabel}</td>
+                    <td>${formatDateTime(inv.sale_date)}</td>
+                    <td class="fw-semibold">${customer}</td>
+                    <td class="text-muted">—</td>
+                    <td>
+                        <span class="badge ${badge}">${method}</span>
+                    </td>
+                    <td class="fw-bold">₹${fmt(inv.total_amount)}</td>
+                    <td class="text-end">
+                        <button
+                            class="btn btn-sm btn-outline-primary"
+                            type="button"
+                            onclick="viewInvoiceModal(${Number(inv.id)})">
+                            <i class="bi bi-eye me-1"></i>View
+                        </button>
+                    </td>
+                </tr>`;
+        }).join('');
     }
 
-    // ── 3. SEARCH + FILTER LISTENERS ─────────────────────────────────────────
+    // Search + payment filter
     searchInput?.addEventListener('input', applyFiltersAndRender);
     filterPaymentMethod?.addEventListener('change', applyFiltersAndRender);
 
-    // ── 4. VIEW INVOICE MODAL ─────────────────────────────────────────────────
-    window.viewInvoiceModal = async function(saleId) {
-        setModalLoading(saleId);
+    // =========================================
+    // 3. VIEW ONE INVOICE
+    // =========================================
+    window.viewInvoiceModal = async function (saleId) {
+        const numericSaleId = Number(saleId);
+        if (!Number.isInteger(numericSaleId) || numericSaleId <= 0) return;
+
+        setModalLoading(numericSaleId);
 
         const modalEl = document.getElementById('invoiceDetailModal');
-        if (!modalEl) return;
-
-        // Remember the button that opened the modal.
-        // Bootstrap can return keyboard focus to it after closing.
-        const activeElement = document.activeElement;
-
-        if (activeElement instanceof HTMLElement && !modalEl.contains(activeElement)) {
-            modalReturnFocus = activeElement;
-        } else {
-            modalReturnFocus = null;
+        if (!modalEl) {
+            console.error('invoiceDetailModal was not found.');
+            return;
         }
 
-        // Create the Bootstrap modal only once.
-        if (!bsModal) {
-            bsModal = new bootstrap.Modal(modalEl);
-
-            // IMPORTANT:
-            // Remove focus from anything inside the modal BEFORE Bootstrap
-            // applies aria-hidden="true".
-            modalEl.addEventListener('hide.bs.modal', () => {
-                const active = document.activeElement;
-
-                if (active instanceof HTMLElement && modalEl.contains(active)) {
-                    active.blur();
-                }
-            });
-
-            // Restore focus to the View button after the modal is completely hidden.
-            modalEl.addEventListener('hidden.bs.modal', () => {
-                if (
-                    modalReturnFocus &&
-                    document.contains(modalReturnFocus)
-                ) {
-                    modalReturnFocus.focus();
-                }
-
-                modalReturnFocus = null;
-            });
+        if (typeof bootstrap === 'undefined') {
+            console.error('Bootstrap is not loaded.');
+            return;
         }
 
+        bsModal = bsModal || new bootstrap.Modal(modalEl);
         bsModal.show();
 
         try {
-            const res = await apiFetch(`${NODE_API}/sales/${saleId}`);
+            const res = await request(`${API}/sales/${numericSaleId}`);
+            const data = await res.json().catch(() => null);
 
             if (!res.ok) {
-                throw new Error(`Could not load invoice #${saleId}`);
+                throw new Error(data?.error || `Could not load invoice #${numericSaleId}`);
             }
 
-            const inv = await res.json();
-            populateModal(inv);
-
+            populateModal(data);
         } catch (err) {
             console.error('Invoice detail fetch failed:', err);
-            setModalError(err.message);
+            setModalError(err.message || 'Could not load invoice.');
         }
     };
 
     function setModalLoading(saleId) {
-        if (modalInvoiceNo)      modalInvoiceNo.textContent      = `#INV-${saleId}`;
-        if (modalInvoiceDate)    modalInvoiceDate.textContent    = 'Loading…';
-        if (modalCustName)       modalCustName.textContent       = '—';
-        if (modalCustPhone)      modalCustPhone.textContent      = '—';
-        if (modalPaymentMethod)  modalPaymentMethod.textContent  = '—';
-        if (modalInvoiceItems)   modalInvoiceItems.innerHTML     = '<tr><td colspan="6" class="text-center text-muted py-3">Loading items…</td></tr>';
-        if (modalSubtotal)       modalSubtotal.textContent       = '₹—';
-        if (modalGST)            modalGST.textContent            = '₹—';
-        if (modalDiscount)       modalDiscount.textContent       = '₹—';
-        if (modalGrandTotal)     modalGrandTotal.textContent     = '₹—';
+        if (modalInvoiceNo) modalInvoiceNo.textContent = `#INV-${saleId}`;
+        if (modalInvoiceDate) modalInvoiceDate.textContent = 'Loading…';
+        if (modalCustName) modalCustName.textContent = '—';
+        if (modalCustPhone) modalCustPhone.textContent = '—';
+        if (modalPaymentMethod) modalPaymentMethod.textContent = '—';
+
+        if (modalInvoiceItems) {
+            modalInvoiceItems.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-3">
+                        Loading items…
+                    </td>
+                </tr>`;
+        }
+
+        if (modalSubtotal) modalSubtotal.textContent = '₹—';
+        if (modalCGST) modalCGST.textContent = '₹—';
+        if (modalSGST) modalSGST.textContent = '₹—';
+        if (modalGST) modalGST.textContent = '₹—';
+        if (modalDiscount) modalDiscount.textContent = '₹—';
         if (modalAmountReceived) modalAmountReceived.textContent = '—';
-        if (modalChangeAmount)   modalChangeAmount.textContent   = '—';
-        if (cashReceivedRow)     cashReceivedRow.style.display   = 'none';
-        if (cashChangeRow)       cashChangeRow.style.display     = 'none';
+        if (modalChangeAmount) modalChangeAmount.textContent = '—';
+        if (modalGrandTotal) modalGrandTotal.textContent = '₹—';
     }
 
-    function setModalError(msg) {
+    function setModalError(message) {
+        const safeMessage = escapeHtml(message || 'Unable to load invoice.');
+
         if (modalInvoiceItems) {
-            modalInvoiceItems.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-3">${msg}</td></tr>`;
+            modalInvoiceItems.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-danger py-3">
+                        <i class="bi bi-exclamation-triangle me-1"></i>
+                        ${safeMessage}
+                    </td>
+                </tr>`;
         }
     }
 
+    // =========================================
+    // 4. POPULATE INVOICE FROM STORED SNAPSHOT
+    // =========================================
     function populateModal(inv) {
-        if (modalInvoiceNo)     modalInvoiceNo.textContent     = `#INV-${inv.id}`;
-        if (modalInvoiceDate)   modalInvoiceDate.textContent   = formatDateTime(inv.sale_date);
-        if (modalCustName)      modalCustName.textContent      = inv.customer_name || 'Walk-in Customer';
-        if (modalCustPhone)     modalCustPhone.textContent     = '—';
-        if (modalPaymentMethod) modalPaymentMethod.textContent = inv.payment_method || 'Cash';
+        if (modalInvoiceNo) {
+            modalInvoiceNo.textContent = inv.invoice_number
+                ? String(inv.invoice_number)
+                : `#INV-${inv.id}`;
+        }
 
-        const items = inv.items || [];
+        if (modalInvoiceDate) {
+            modalInvoiceDate.textContent = formatDateTime(inv.sale_date);
+        }
+
+        if (modalCustName) {
+            modalCustName.textContent = inv.customer_name || 'Walk-in Customer';
+        }
+
+        if (modalCustPhone) {
+            // Customer phone is not currently stored by the sales schema.
+            modalCustPhone.textContent = '—';
+        }
+
+        if (modalPaymentMethod) {
+            modalPaymentMethod.textContent = inv.payment_method || 'Cash';
+        }
+
+        const items = Array.isArray(inv.items) ? inv.items : [];
+
         if (modalInvoiceItems) {
             if (!items.length) {
-                modalInvoiceItems.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No items found</td></tr>';
+                modalInvoiceItems.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">
+                            No items found.
+                        </td>
+                    </tr>`;
             } else {
                 modalInvoiceItems.innerHTML = items.map(item => {
-                    const gstPct   = parseFloat(item.cgst_rate || 0) + parseFloat(item.sgst_rate || 0);
-                    const lineBase = parseFloat(item.unit_price) * parseInt(item.quantity);
+                    const quantity = num(item.quantity, 0);
+                    const unitPrice = num(item.unit_price, 0);
+
+                    const cgstRate = num(item.cgst_rate, 0);
+                    const sgstRate = num(item.sgst_rate, 0);
+                    const gstPct = num(
+                        item.gst_rate,
+                        cgstRate + sgstRate
+                    );
+
+                    const storedDiscount = num(item.discount, 0);
+                    const storedLineTotal = num(item.line_total, NaN);
+                    const storedTax = num(item.tax_amount, NaN);
+                    const storedTaxable = num(item.line_subtotal, NaN);
+
+                    // New invoices store the final customer-facing line total
+                    // (GST included, after line-level discount) and the
+                    // GST/taxable snapshot. Never recalculate historical
+                    // invoices from today's Product data.
+                    const lineTotal = Number.isFinite(storedLineTotal)
+                        ? storedLineTotal
+                        : Math.max(0, unitPrice * quantity - storedDiscount);
+
+                    let lineTax = Number.isFinite(storedTax) ? storedTax : 0;
+                    let lineTaxable = Number.isFinite(storedTaxable) ? storedTaxable : NaN;
+
+                    if (!Number.isFinite(lineTax) && gstPct > 0) {
+                        lineTax = lineTotal * gstPct / (100 + gstPct);
+                    }
+
+                    if (!Number.isFinite(lineTaxable)) {
+                        lineTaxable = lineTotal - lineTax;
+                    }
+
                     return `
                         <tr>
-                            <td>${item.product_name || 'Item'}</td>
-                            <td class="text-center">${item.quantity}</td>
-                            <td class="text-end">₹${fmt(item.unit_price)}</td>
-                            <td class="text-center">${gstPct}%</td>
-                            <td class="text-end">—</td>
-                            <td class="text-end fw-bold">₹${fmt(lineBase)}</td>
+                            <td>${escapeHtml(item.product_name || 'Item')}</td>
+                            <td class="text-center">${fmt(quantity)}</td>
+                            <td class="text-end">₹${fmt(unitPrice)}</td>
+                            <td class="text-center">${fmt(gstPct)}%</td>
+                            <td class="text-end">₹${fmt(storedDiscount)}</td>
+                            <td class="text-end fw-bold">₹${fmt(lineTotal)}</td>
                         </tr>`;
                 }).join('');
             }
         }
 
-        const cgst     = parseFloat(inv.cgst_amount || 0);
-        const sgst     = parseFloat(inv.sgst_amount || 0);
-        const totalGst = cgst + sgst;
+        // Always use the stored sale-header totals.
+        // New invoices store subtotal_amount as the GST-exclusive taxable
+        // sales value after discount, while total_amount is the final
+        // GST-inclusive amount paid by the customer.
+        const cgst = num(inv.cgst_amount, 0);
+        const sgst = num(inv.sgst_amount, 0);
+        const totalGst = num(inv.tax_amount, cgst + sgst);
+        const taxableAmount = num(
+            inv.subtotal_amount,
+            num(inv.subtotal, 0)
+        );
+        const discount = num(inv.discount, 0);
+        const grandTotal = num(inv.total_amount, 0);
 
-        if (modalSubtotal)   modalSubtotal.textContent   = `₹${fmt(inv.subtotal)}`;
-        if (modalGST)        modalGST.textContent        = `₹${fmt(totalGst)}`;
-        if (modalDiscount)   modalDiscount.textContent   = `₹${fmt(inv.discount)}`;
-        if (modalGrandTotal) modalGrandTotal.textContent = `₹${fmt(inv.total_amount)}`;
-
-        const isCash = String(inv.payment_method || '').toUpperCase() === 'CASH';
-        if (cashReceivedRow) cashReceivedRow.style.display = isCash ? '' : 'none';
-        if (cashChangeRow) cashChangeRow.style.display = isCash ? '' : 'none';
+        if (modalSubtotal) modalSubtotal.textContent = `₹${fmt(taxableAmount)}`;
+        if (modalCGST) modalCGST.textContent = `₹${fmt(cgst)}`;
+        if (modalSGST) modalSGST.textContent = `₹${fmt(sgst)}`;
+        if (modalGST) modalGST.textContent = `₹${fmt(totalGst)}`;
+        if (modalDiscount) modalDiscount.textContent = `₹${fmt(discount)}`;
         if (modalAmountReceived) {
-            modalAmountReceived.textContent = isCash && inv.amount_received != null
-                ? `₹${fmt(inv.amount_received)}` : '—';
+            const received = inv.amount_received;
+            modalAmountReceived.textContent =
+                received === null || received === undefined
+                    ? '—'
+                    : `₹${fmt(received)}`;
         }
         if (modalChangeAmount) {
-            modalChangeAmount.textContent = isCash && inv.change_amount != null
-                ? `₹${fmt(inv.change_amount)}` : '—';
+            const change = inv.change_amount;
+            modalChangeAmount.textContent =
+                change === null || change === undefined
+                    ? '—'
+                    : `₹${fmt(change)}`;
         }
+        if (modalGrandTotal) modalGrandTotal.textContent = `₹${fmt(grandTotal)}`;
     }
 
-    // ── 5. PRINT BUTTON ───────────────────────────────────────────────────────
+    // =========================================
+    // 5. PRINT BUTTON
+    // =========================================
     if (btnPrintInvoice) {
         btnPrintInvoice.addEventListener('click', () => window.print());
     }
 
-    // ── LOADING / ERROR STATES ────────────────────────────────────────────────
+    // =========================================
+    // TABLE LOADING / ERROR STATES
+    // =========================================
     function showTableLoading() {
-        if (invoicesTableBody) {
-            invoicesTableBody.innerHTML = `
-                <tr><td colspan="7" class="text-center text-muted py-4">
+        if (!invoicesTableBody) return;
+
+        invoicesTableBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center text-muted py-4">
                     <div class="spinner-border spinner-border-sm me-2" role="status"></div>
                     Loading invoices from database…
-                </td></tr>`;
-        }
+                </td>
+            </tr>`;
     }
 
-    function showTableError(msg) {
-        if (invoicesTableBody) {
-            invoicesTableBody.innerHTML = `
-                <tr><td colspan="7" class="text-center text-danger py-4">
+    function showTableError(message) {
+        if (!invoicesTableBody) return;
+
+        invoicesTableBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center text-danger py-4">
                     <i class="bi bi-exclamation-triangle display-6 d-block mb-2"></i>
-                    Could not load invoices: ${msg}<br>
-                    <small class="text-muted">Make sure Node.js server is running and ngrok is active.</small>
-                </td></tr>`;
-        }
+                    Could not load invoices: ${escapeHtml(message)}<br>
+                    <small class="text-muted">
+                        Make sure Node.js server is running on port 5000.
+                    </small>
+                </td>
+            </tr>`;
     }
 
+    // =========================================
+    // INITIAL LOAD
+    // =========================================
     await loadInvoices();
 });
